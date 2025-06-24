@@ -28,13 +28,13 @@ liquidreco -h
 ## Example
 
 Initial fiber hits:
-![Example event fiber hits](doc/example_neut_event_fibers.png)
+![Example event fiber hits](images/example_neut_event_fibers.png)
 
 Are cleaned up and turned into 3 dimensional hits:
-![gif](doc/example_neut_event.gif)
+![gif](images/example_neut_event.gif)
 
 We can then use one of a number of different reconstruction algorithms on these. One of the most simple (and most effective) is a [Hough transform](https://en.wikipedia.org/wiki/Hough_transform) (implemented in the reconstruction.HoughTransform class):
 
-![Hough tracks](doc/example_neut_event_hough.png)
+![Hough tracks](images/example_neut_event_hough.png)
 
 (Note that the hough transform is performed in 3D then the result projected back down to 2D for easier visualisation)

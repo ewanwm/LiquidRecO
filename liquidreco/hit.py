@@ -68,7 +68,7 @@ class Hit2D(Hit):
         :type hits: typing.List[Hit2D]
         :param direction: the dimension to take the average in. e.g. 'x' to get the mean x position 'y' for mean y...
         :type direction: str
-        :return: _description_
+        :return: the weighted mean position
         :rtype: float
         """
 
@@ -140,9 +140,21 @@ class Hit2D(Hit):
         return getattr(self, direction) != getattr(self, "fiber_" + direction) 
 
 class Hit3D(Hit):
+    """Describes a 3D hit constructed from two or three WLS fibers"""
 
     @staticmethod
-    def from_fiber_hits(x_fiber_hit:Hit, y_fiber_hit:Hit, z_fiber_hit=None):
+    def from_fiber_hits(x_fiber_hit:Hit2D, y_fiber_hit:Hit2D, z_fiber_hit:Hit2D=None) -> 'Hit3D':
+        """Create a Hit3D from some 2D fiber hits
+
+        :param x_fiber_hit: The x fiber
+        :type x_fiber_hit: Hit2D
+        :param y_fiber_hit: The y fiber
+        :type y_fiber_hit: Hit2D
+        :param z_fiber_hit: The (optional) z fiber, defaults to None
+        :type z_fiber_hit: Hit2D, optional
+        :return: The constructed 3D hit
+        :rtype: Hit3D
+        """
 
         hit = Hit3D()
 
@@ -205,7 +217,7 @@ class Hit3D(Hit):
         self.y_fiber_hit = y_fiber_hit
         self.z_fiber_hit = z_fiber_hit
     
-    def get_mean_x(self):
+    def get_mean_x(self) -> float:
 
         if self.z_fiber_hit is not None:
 
@@ -230,7 +242,7 @@ class Hit3D(Hit):
         else:
             return self.y_fiber_hit.x
 
-    def get_mean_y(self):
+    def get_mean_y(self) -> float:
 
         if self.z_fiber_hit is not None:
 
@@ -255,7 +267,7 @@ class Hit3D(Hit):
         else:
             return self.x_fiber_hit.y
         
-    def get_mean_z(self):
+    def get_mean_z(self) -> float:
 
         ## if neither 2d hit contains extra x information, just get voxel position
         if not self.x_fiber_hit.is_cluster("z") and not self.y_fiber_hit.is_cluster("z"):

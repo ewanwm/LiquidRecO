@@ -1,3 +1,7 @@
+"""Module to be used to reconstruct tracks from hits.
+
+"""
+
 import numpy as np
 from matplotlib import pyplot as plt
 from liquidreco.hit import Event
@@ -19,6 +23,12 @@ from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from scipy.linalg import eig
 
 class ReconstructionAlgorithm:
+    """Base reconstruction algorithm.
+    
+    Should not be used directly but reconstruction algorithms should derive 
+    this.
+    
+    """
 
     def __init__(
             self,
