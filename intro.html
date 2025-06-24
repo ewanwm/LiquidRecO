@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LiquidRecO &mdash; LiquidRecO 0.0.0 documentation</title>
+  <title>Installation &mdash; LiquidRecO 0.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -42,15 +42,15 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">🚀 Getting Started</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">LiquidRecO</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#usage">Usage</a></li>
 </ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">📖 References</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://liquido.ijclab.in2p3.fr/overview/">LiquidO 🔗</a></li>
 </ul>
 
         </div>
@@ -67,9 +67,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">LiquidRecO</li>
+      <li class="breadcrumb-item active">Installation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/README.md.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/intro.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -77,11 +77,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="liquidreco">
-<h1>LiquidRecO<a class="headerlink" href="#liquidreco" title="Link to this heading"></a></h1>
-<p>Reconstruction library for a 3D <a class="reference external" href="https://liquido.ijclab.in2p3.fr/overview/">LiquidO</a> detector.</p>
+  <p>Reconstruction library for a 3D <a class="reference external" href="https://liquido.ijclab.in2p3.fr/overview/">LiquidO</a> detector.</p>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
 <p>Git clone this repository then can be installed using pip:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">ewanwm</span><span class="o">/</span><span class="n">LiquidRecO</span><span class="o">.</span><span class="n">git</span>
 
@@ -90,7 +88,7 @@
 </div>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
 <p>After installing, you can use the liquidreco app to run the reconstruction:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">liquidreco</span> <span class="o">-</span><span class="n">i</span> <span class="o">&lt;</span><span class="n">file</span> <span class="n">containing</span> <span class="n">hits</span><span class="o">&gt;</span>
 </pre></div>
@@ -99,17 +97,6 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">liquidreco</span> <span class="o">-</span><span class="n">h</span>
 </pre></div>
 </div>
-</section>
-<section id="example">
-<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
-<p>Initial fiber hits:
-<img alt="Example event fiber hits" src="_images/example_neut_event_fibers.png" /></p>
-<p>Are cleaned up and turned into 3 dimensional hits:
-<img alt="gif" src="_images/example_neut_event.gif" /></p>
-<p>We can then use one of a number of different reconstruction algorithms on these. One of the most simple (and most effective) is a <a class="reference external" href="https://en.wikipedia.org/wiki/Hough_transform">Hough transform</a> (implemented in the reconstruction.HoughTransform class):</p>
-<p><img alt="Hough tracks" src="_images/example_neut_event_hough.png" /></p>
-<p>(Note that the hough transform is performed in 3D then the result projected back down to 2D for easier visualisation)</p>
-</section>
 </section>
 
 
