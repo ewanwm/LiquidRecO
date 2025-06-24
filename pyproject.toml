@@ -11,12 +11,14 @@ authors = [
 ]
 license = "GPL-3.0-or-later"
 dependencies = [
+  "tqdm",
   "scikit-image",
   "matplotlib",
   "uproot",
   "numpy",
   "scipy",
   "scikit-learn",
+  "linscan@git+https://github.com/ewanwm/linscan.git",
   "hough3d@git+https://github.com/ewanwm/hough3d.git",
 ]
 
