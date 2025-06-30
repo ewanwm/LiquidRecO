@@ -1,26 +1,26 @@
 API
 ===
 
-==============
-Reconstruction
-==============
-.. automodule:: liquidreco.reconstruction
-   :members:
-
-========
-Plotting
-========
-.. automodule:: liquidreco.plotting
-   :members:
-
 ====
 Hits
 ====
 .. automodule:: liquidreco.hit
    :members:
 
+==============
+Reconstruction
+==============
+.. automodule:: liquidreco.reconstruction
+   :members:
+
 ===============
 Event Processor
 ===============
 .. automodule:: liquidreco.event_processor
+   :members:
+
+========
+Plotting
+========
+.. automodule:: liquidreco.plotting
    :members:
