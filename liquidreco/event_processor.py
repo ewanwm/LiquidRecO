@@ -147,7 +147,8 @@ class EventProcessor:
             event_3d_hits = build_3d_hits(
                 x_fiber_hits, y_fiber_hits, z_fiber_hits, 
                 require_3_fibers=not self.args.allow_2_fiber_hits,
-                min_2d_hit_weight=self.args.min_2d_hit_weight)
+                min_2d_hit_weight=self.args.min_2d_hit_weight,
+                n_required_peaks=self.args.n_required_peak_hits)
 
             if len(event_3d_hits) == 0:
                 print("NO HITS!! SKIPPING EVENT!!")

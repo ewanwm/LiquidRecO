@@ -134,16 +134,24 @@ class Hit2D(Hit):
         else:
             return self.weight
         
-    def is_cluster(self, direction):
-        """True if this hit has cluster info in the specified direction. i.e. more position info than just the fiber position"""
+    def is_peak(self, direction:str) -> bool:
+        """Checks if this hit is considered a peak in a particular direction i.e. more position info than just the fiber position
 
+        :param direction: The direction to test
+        :type direction: str
+        :return: True if this hit has peak info in the specified direction. 
+        :rtype: bool
+        """
+
+        ## literally just check if the position is the same as the fiber position
+        ## if not it must have been modified and therefore must be a peak... could be done more elegantly
         return getattr(self, direction) != getattr(self, "fiber_" + direction) 
 
 class Hit3D(Hit):
     """Describes a 3D hit constructed from two or three WLS fibers"""
 
     @staticmethod
-    def from_fiber_hits(x_fiber_hit:Hit2D, y_fiber_hit:Hit2D, z_fiber_hit:Hit2D=None) -> 'Hit3D':
+    def from_fiber_hits(x_fiber_hit:Hit2D, y_fiber_hit:Hit2D, z_fiber_hit:Hit2D=None, n_required_peaks:int = None) -> 'Hit3D':
         """Create a Hit3D from some 2D fiber hits
 
         :param x_fiber_hit: The x fiber
@@ -152,7 +160,10 @@ class Hit3D(Hit):
         :type y_fiber_hit: Hit2D
         :param z_fiber_hit: The (optional) z fiber, defaults to None
         :type z_fiber_hit: Hit2D, optional
-        :return: The constructed 3D hit
+        :param n_required_peaks: require this number of peak hits to be present in each direction to successfuly create a hit.
+        e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z peaks, the hit will not be valid. defaults to None
+        :type n_required_peaks: int
+        :return: The constructed 3D hit, None if the n_required_peaks condition is not satisfied in any direction
         :rtype: Hit3D
         """
 
@@ -181,6 +192,27 @@ class Hit3D(Hit):
         if z_fiber_hit is not None:
             hit.weight = min(hit.weight, z_fiber_hit.weight)
 
+        ## check the number of peak hits in each dimension
+        if n_required_peaks:
+            n_x_peaks:int = int(y_fiber_hit.is_peak("x"))
+            if z_fiber_hit:
+                n_x_peaks += int(z_fiber_hit.is_peak("x"))
+
+            n_y_peaks:int = int(x_fiber_hit.is_peak("y"))
+            if z_fiber_hit:
+                n_y_peaks += int(z_fiber_hit.is_peak("y"))
+                
+            n_z_peaks:int = int(x_fiber_hit.is_peak("z") + y_fiber_hit.is_peak("z"))
+
+            ## if any are below the threshold, return a None
+            if (
+                (n_x_peaks < n_required_peaks) or
+                (n_y_peaks < n_required_peaks) or
+                (n_z_peaks < n_required_peaks)
+            ):
+                return None
+
+        ## if hit is valid, calculate the means 
         hit.x = hit.get_mean_x()
         hit.y = hit.get_mean_y()
         hit.z = hit.get_mean_z()
@@ -222,17 +254,17 @@ class Hit3D(Hit):
         if self.z_fiber_hit is not None:
 
             ## if neither 2d hit contains extra x information, just get voxel position
-            if not self.y_fiber_hit.is_cluster("x") and not self.z_fiber_hit.is_cluster("x"):
+            if not self.y_fiber_hit.is_peak("x") and not self.z_fiber_hit.is_peak("x"):
                 return self.voxel_x
             
             ## otherwise do a weighted mean of the two
             x = 0.0
             accum = 0.0
 
-            if self.y_fiber_hit.is_cluster("x"):
+            if self.y_fiber_hit.is_peak("x"):
                 x += self.y_fiber_hit.x
                 accum += 1
-            if self.z_fiber_hit.is_cluster("x"):
+            if self.z_fiber_hit.is_peak("x"):
                 x += self.z_fiber_hit.x
                 accum += 1
             
@@ -247,17 +279,17 @@ class Hit3D(Hit):
         if self.z_fiber_hit is not None:
 
             ## if neither 2d hit contains extra x information, just get voxel position
-            if not self.x_fiber_hit.is_cluster("y") and not self.z_fiber_hit.is_cluster("y"):
+            if not self.x_fiber_hit.is_peak("y") and not self.z_fiber_hit.is_peak("y"):
                 return self.voxel_y
             
             ## otherwise do a weighted mean of the two
             y = 0.0
             accum = 0.0
 
-            if self.x_fiber_hit.is_cluster("y"):
+            if self.x_fiber_hit.is_peak("y"):
                 y += self.x_fiber_hit.y
                 accum += 1
-            if self.z_fiber_hit.is_cluster("y"):
+            if self.z_fiber_hit.is_peak("y"):
                 y += self.z_fiber_hit.y
                 accum += 1
             
@@ -270,17 +302,17 @@ class Hit3D(Hit):
     def get_mean_z(self) -> float:
 
         ## if neither 2d hit contains extra x information, just get voxel position
-        if not self.x_fiber_hit.is_cluster("z") and not self.y_fiber_hit.is_cluster("z"):
+        if not self.x_fiber_hit.is_peak("z") and not self.y_fiber_hit.is_peak("z"):
             return self.voxel_z
         
         ## otherwise do a weighted mean of the two
         z = 0.0
         accum = 0.0
 
-        if self.x_fiber_hit.is_cluster("z"):
+        if self.x_fiber_hit.is_peak("z"):
             z += self.x_fiber_hit.z
             accum += 1
-        if self.y_fiber_hit.is_cluster("z"):
+        if self.y_fiber_hit.is_peak("z"):
             z += self.y_fiber_hit.z
             accum += 1
         
@@ -552,23 +584,36 @@ def find_2d_peaks(
 
 
 def build_3d_hits(
-        x_fiber_hits, y_fiber_hits, z_fiber_hits, require_3_fibers:bool = True,
+        x_fiber_hits:typing.List[Hit2D], y_fiber_hits:typing.List[Hit2D], z_fiber_hits:typing.List[Hit2D], 
+        require_3_fibers:bool = True,
         pitch:typing.Tuple[float] = (10.0, 10.0, 10.0),
         min_2d_hit_weight:float = 0.0,
+        n_required_peaks:int = None,
+        max_weighted_distance: float = None
         ) -> typing.List[Hit]:
-    
     """Makes 3D hits from arrays of info about 2d fiber hits
 
-    :param positions: positions of the 2d hits, should be of shape [nHits, 3] where 2nd index is over xPos, yPos, zPos
-    :type positions: np.ndarraye
-    :param weights: Weights to apply to each event, typically charge, should be of shape [nHits, 1]
-    :type weights: np.ndarray
-    :param times: times for each hit, should be of shape [nHits, 1]
-    :type times: np.ndarray
+    :param x_fiber_hits: List of 2D YZ fibers
+    :type x_fiber_hits: typing.List[Hit2D]
+    :param y_fiber_hits: List of 2D XZ fibers
+    :type y_fiber_hits: typing.List[Hit2D]
+    :param z_fiber_hits: List of 2D XY fibers
+    :type z_fiber_hits: typing.List[Hit2D]
+    :param require_3_fibers: Whether to require 3 fibers to form a hit or allow only on x and one y fiber, defaults to True
+    :type require_3_fibers: bool, optional
+    :param pitch: The distance between fibers in each direction, defaults to (10.0, 10.0, 10.0)
+    :type pitch: typing.Tuple[float], optional
+    :param min_2d_hit_weight: The minimum weight a 2D fiber hit must have to be considered when building 3D hits, defaults to 0.0
+    :type min_2d_hit_weight: float, optional
+    :param n_required_peaks: The number of "peak hits" required in each direction to form a valid 3D hit (see :func:`Hit3D.from_fiber_hits` for more details), defaults to None
+    :type n_required_peaks: int, optional
+    :param max_weighed_distance: The maximum "real" i.e. peak weighted discance between 2D hits in order for them to be considered for combining into a 3D hit. Specified as a fraction of fiber pitch, defaults to None
+    :type max_weighted_distance: float, optional
     :return: list of 3d hits
-    :rtype: list[Hit]
+    :rtype: typing.List[Hit]
     """
 
+    
     x_positions = np.array([[hit.fiber_y, hit.fiber_z] for hit in x_fiber_hits])
     y_positions = np.array([[hit.fiber_x, hit.fiber_z] for hit in y_fiber_hits])
     z_positions = np.array([[hit.fiber_x, hit.fiber_y] for hit in z_fiber_hits])
@@ -599,19 +644,30 @@ def build_3d_hits(
             ): 
                 continue
 
+            if max_weighted_distance is not None:
+                if (
+                    abs( y_hit.z - x_hit.z) > pitch[2] * max_weighted_distance
+                ): 
+                    continue
+
             if (
                 x_hit.weight < min_2d_hit_weight or
                 y_hit.weight < min_2d_hit_weight
             ):
                 continue
 
-            hit = Hit3D.from_fiber_hits(x_hit, y_hit)
+            ## if we're only requiring 2D hits, apply min n peak condition here, otherwise hold off until we build the 3 fiber hit
+            if not require_3_fibers:
+                hit = Hit3D.from_fiber_hits(x_hit, y_hit, n_required_peaks=n_required_peaks)
+            else:
+                hit = Hit3D.from_fiber_hits(x_hit, y_hit)
 
             # print(f"x hit:  {x_hit}")
             # print(f"y hit:  {y_hit}")
             # print(f"3d hit: {hit}")
 
-            two_fiber_hits.append(hit)
+            if hit:
+                two_fiber_hits.append(hit)
 
     if not require_3_fibers:
         return two_fiber_hits
@@ -638,6 +694,14 @@ def build_3d_hits(
                 abs(two_fiber_hit.voxel_y - z_hit.fiber_y ) > pitch[1] * 0.75
             ):
                 continue
+
+
+            if max_weighted_distance is not None:
+                if (
+                    abs( z_hit.x - two_fiber_hit.x) > pitch[0] * max_weighted_distance or
+                    abs( z_hit.y - two_fiber_hit.y) > pitch[1] * max_weighted_distance
+                ): 
+                    continue
             
             if (
                 z_hit.weight < min_2d_hit_weight
@@ -648,10 +712,12 @@ def build_3d_hits(
             hit = Hit3D.from_fiber_hits(
                 two_fiber_hit.x_fiber_hit, 
                 two_fiber_hit.y_fiber_hit, 
-                z_hit
+                z_hit,
+                n_required_peaks = n_required_peaks
             )
 
-            three_fiber_hits.append(hit)
+            if hit:
+                three_fiber_hits.append(hit)
 
     return three_fiber_hits
 
