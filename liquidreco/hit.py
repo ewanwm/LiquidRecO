@@ -161,7 +161,7 @@ class Hit3D(Hit):
         :param z_fiber_hit: The (optional) z fiber, defaults to None
         :type z_fiber_hit: Hit2D, optional
         :param n_required_peaks: require this number of peak hits to be present in each direction to successfuly create a hit.
-        e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z peaks, the hit will not be valid. defaults to None
+            e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z peaks, the hit will not be valid. defaults to None
         :type n_required_peaks: int
         :return: The constructed 3D hit, None if the n_required_peaks condition is not satisfied in any direction
         :rtype: Hit3D
