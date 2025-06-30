@@ -61,14 +61,16 @@ class EventProcessor:
             self._times     = np.array(hit_tree["time"].array(library="np").tolist())
             self._event_ids = np.array(hit_tree["event"].array(library="np").tolist())
 
-    def apply_weight_scaling(self):
-        ## 0.4 = photon detection efficiency
-        ## 0.1 = trapping probability
-        ## 0.5 = because one sided readout
-        self._weights *= 0.4 * 0.1 * 0.5
-    
-        ## apply a 1 photon threshold
-        self._weights *= (self._weights > 1.0)
+    def apply_weight_scaling(self, scaling: float) -> None:
+        """Apply scaling to the charges of the events
+
+        Might be useful if you want e.g. to compare truth hits with hits that 
+        have DAQ or fiber effects applied.
+
+        :param scaling: The scaling to apply
+        :type scaling: float
+        """
+        self._weights *= scaling
 
     def initialise(self):
         self._corner_pdf = matplotlib.backends.backend_pdf.PdfPages("3dHitCornerPlots.pdf")
@@ -132,9 +134,9 @@ class EventProcessor:
 
             x_fiber_hits, y_fiber_hits, z_fiber_hits = build_2d_hits(
                 event_positions, event_weights, event_times,
-                x_fiber_x_pos=self.args.homo_centre_x,
-                y_fiber_y_pos=self.args.homo_centre_y,
-                z_fiber_z_pos=self.args.homo_centre_z
+                x_fiber_x_pos=self.args.x_fiber_x_pos,
+                y_fiber_y_pos=self.args.y_fiber_y_pos,
+                z_fiber_z_pos=self.args.z_fiber_z_pos
             )
 
             if self.args.find_2d_peaks:
