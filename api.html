@@ -49,7 +49,7 @@
 <p class="caption" role="heading"><span class="caption-text">📖 References</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-liquidreco.hit">Hits</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hits">Hits</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.Hit2D"><code class="docutils literal notranslate"><span class="pre">Hit2D</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.copy"><code class="docutils literal notranslate"><span class="pre">Hit2D.copy()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.get_mean_pos"><code class="docutils literal notranslate"><span class="pre">Hit2D.get_mean_pos()</span></code></a></li>
@@ -64,15 +64,19 @@
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.local_normalisation"><code class="docutils literal notranslate"><span class="pre">local_normalisation()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-liquidreco.reconstruction">Reconstruction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#reconstruction">Reconstruction</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.HesseRidgeDetection"><code class="docutils literal notranslate"><span class="pre">HesseRidgeDetection</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.HoughTransform"><code class="docutils literal notranslate"><span class="pre">HoughTransform</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.LocalMeanDBSCAN"><code class="docutils literal notranslate"><span class="pre">LocalMeanDBSCAN</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.ReconstructionAlgorithm"><code class="docutils literal notranslate"><span class="pre">ReconstructionAlgorithm</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-liquidreco.event_processor">Event Processor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-liquidreco.plotting">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#event-processor">Event Processor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://liquido.ijclab.in2p3.fr/overview/">LiquidO 🔗</a></li>
@@ -104,9 +108,10 @@
              
   <section id="api">
 <h1>API<a class="headerlink" href="#api" title="Link to this heading"></a></h1>
-<section id="module-liquidreco.hit">
-<span id="hits"></span><h2>Hits<a class="headerlink" href="#module-liquidreco.hit" title="Link to this heading"></a></h2>
-<dl class="py class">
+<section id="hits">
+<h2>Hits<a class="headerlink" href="#hits" title="Link to this heading"></a></h2>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.hit">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit2D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_hits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit2D" title="Link to this definition"></a></dt>
 <dd><p>Describes a 2D WLS fiber hit</p>
@@ -180,14 +185,17 @@
 <li><p><strong>x_fiber_hit</strong> (<a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a>) – The x fiber</p></li>
 <li><p><strong>y_fiber_hit</strong> (<a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a>) – The y fiber</p></li>
 <li><p><strong>z_fiber_hit</strong> (<a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a><em>, </em><em>optional</em>) – The (optional) z fiber, defaults to None</p></li>
-<li><p><strong>n_required_peaks</strong> – require this number of peak hits to be present in each direction to successfuly create a hit.</p></li>
+<li><p><strong>n_required_peaks</strong> (<em>int</em>) – require this number of peak hits to be present in each direction to successfuly create a hit.
+e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z peaks, the hit will not be valid. defaults to None</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constructed 3D hit, None if the n_required_peaks condition is not satisfied in any direction</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#liquidreco.hit.Hit3D" title="liquidreco.hit.Hit3D">Hit3D</a></p>
+</dd>
 </dl>
-<p>e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z peaks, the hit will not be valid. defaults to None
-:type n_required_peaks: int
-:return: The constructed 3D hit, None if the n_required_peaks condition is not satisfied in any direction
-:rtype: Hit3D</p>
 </dd></dl>
 
 </dd></dl>
@@ -225,10 +233,12 @@
 and hits in the neighbourhood have their charges normalised by this value</p>
 </dd></dl>
 
+</div></blockquote>
 </section>
-<section id="module-liquidreco.reconstruction">
-<span id="reconstruction"></span><h2>Reconstruction<a class="headerlink" href="#module-liquidreco.reconstruction" title="Link to this heading"></a></h2>
-<p>Module to be used to reconstruct tracks from hits.</p>
+<section id="reconstruction">
+<h2>Reconstruction<a class="headerlink" href="#reconstruction" title="Link to this heading"></a></h2>
+<blockquote>
+<div><p id="module-liquidreco.reconstruction">Module to be used to reconstruct tracks from hits.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.reconstruction.HesseRidgeDetection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_orthogonal_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.reconstruction.HesseRidgeDetection" title="Link to this definition"></a></dt>
@@ -254,12 +264,33 @@ and hits in the neighbourhood have their charges normalised by this value</p>
 this.</p>
 </dd></dl>
 
+</div></blockquote>
 </section>
-<section id="module-liquidreco.event_processor">
-<span id="event-processor"></span><h2>Event Processor<a class="headerlink" href="#module-liquidreco.event_processor" title="Link to this heading"></a></h2>
+<section id="event-processor">
+<h2>Event Processor<a class="headerlink" href="#event-processor" title="Link to this heading"></a></h2>
+<blockquote>
+<div></div></blockquote>
 </section>
-<section id="module-liquidreco.plotting">
-<span id="plotting"></span><h2>Plotting<a class="headerlink" href="#module-liquidreco.plotting" title="Link to this heading"></a></h2>
+<section id="plotting">
+<span id="module-liquidreco.event_processor"></span><h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
+<blockquote>
+<div></div></blockquote>
+</section>
+<section id="apps">
+<span id="module-liquidreco.plotting"></span><h2>Apps<a class="headerlink" href="#apps" title="Link to this heading"></a></h2>
+<section id="liquidreco">
+<h3>liquidreco<a class="headerlink" href="#liquidreco" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p id="module-liquidreco.app.liquidreco">LiquidReco main app.</p>
+<p>Takes a root file that contains 2D fiber hits, creates an EventProcessor
+based on the provided arguments, and processes the fiber hits using this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">raises ValueError<span class="colon">:</span></dt>
+<dd class="field-odd"><p>if input args are not valid</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
 </section>
 </section>
 
