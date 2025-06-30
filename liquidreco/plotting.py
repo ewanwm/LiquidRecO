@@ -4,15 +4,19 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 import matplotlib.animation as animation
 
+import typing 
+from liquidreco.hit import Hit, Hit2D, Hit3D
+
 
 def make_corner_plot(
         fig,
         axs, 
-        hits,
+        hits:typing.List[Hit3D],
         charge_cutoff=200.0,
         cmap=plt.get_cmap("coolwarm"),
         marker=".",
-        plot_cbar = True):
+        plot_cbar = True,
+        include_fibers = False):
 
     c = [cmap(ev.weight / charge_cutoff) for ev in hits]
     s = [0.1*(min(ev.weight,charge_cutoff) / charge_cutoff) for ev in hits]
@@ -26,6 +30,24 @@ def make_corner_plot(
         marker = marker
     )
     axs[0,0].set_ylabel("z [mm]")
+
+    if include_fibers:
+        x_lims = axs[0,0].get_xlim()
+        y_lims = axs[0,0].get_ylim()
+
+        for hit in hits:
+            axs[0,0].plot(
+                [hit.y_fiber_hit.fiber_x, hit.y_fiber_hit.fiber_x],
+                y_lims, 
+                c="k",
+                lw = 0.05)
+            
+            axs[0,0].plot(
+                x_lims, 
+                [hit.y_fiber_hit.fiber_z, hit.y_fiber_hit.fiber_z],
+                c="k",
+                lw = 0.05)
+            
     
 
     axs[1,0].scatter(
@@ -38,7 +60,23 @@ def make_corner_plot(
     )
     axs[1,0].set_xlabel("x [mm]")
     axs[1,0].set_ylabel("y [mm]")
-    8
+    
+    if include_fibers:
+        x_lims = axs[1,0].get_xlim()
+        y_lims = axs[1,0].get_ylim()
+
+        for hit in hits:
+            axs[1,0].plot(
+                [hit.z_fiber_hit.fiber_x, hit.z_fiber_hit.fiber_x],
+                y_lims, 
+                c="k",
+                lw = 0.05)
+            
+            axs[1,0].plot(
+                x_lims, 
+                [hit.z_fiber_hit.fiber_y, hit.z_fiber_hit.fiber_y],
+                c="k",
+                lw = 0.05)
 
 
     mappable = axs[1,1].scatter(
@@ -50,6 +88,23 @@ def make_corner_plot(
         marker=marker
     )
     axs[1,1].set_xlabel("z [mm]")
+
+    if include_fibers:
+        x_lims = axs[1,1].get_xlim()
+        y_lims = axs[1,1].get_ylim()
+
+        for hit in hits:
+            axs[1,1].plot(
+                [hit.x_fiber_hit.fiber_z, hit.x_fiber_hit.fiber_z],
+                y_lims, 
+                c="k",
+                lw = 0.05)
+            
+            axs[1,1].plot(
+                x_lims, 
+                [hit.x_fiber_hit.fiber_y, hit.x_fiber_hit.fiber_y],
+                c="k",
+                lw = 0.05)
     
     if plot_cbar:
         norm = matplotlib.colors.Normalize(vmin=0, vmax=charge_cutoff)
