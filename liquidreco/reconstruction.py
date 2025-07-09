@@ -154,7 +154,7 @@ class HoughTransform(ReconstructionAlgorithm):
         if self.make_gifs:
             make_rotating_gif(fig, ax, f"Hough_3D.gif")
 
-        fig.clf()
+        plt.close(fig)
     
     def _finalise(self):
         self._pdf.close()
@@ -213,6 +213,7 @@ class LocalMeanDBSCAN(ReconstructionAlgorithm):
         fig = plt.figure()
         plt.scatter(data[:,0], data[:,2], s = 0.01 * weights, c = cluster_ids)
         self._pdf.savefig(fig)
+        plt.close(fig)
         
     def _finalise(self):
         self._pdf.close()
@@ -305,7 +306,7 @@ class HesseRidgeDetection(ReconstructionAlgorithm):
         ax[4].set_title("Hessian Filter")
 
         self._pdf.savefig(fig)
-        plt.clf()
+        plt.close(fig)
 
         fig = plt.figure(figsize=(10, 10))
         plt.imshow(ridgeness, cmap=plt.get_cmap("gray"))
@@ -345,6 +346,7 @@ class HesseRidgeDetection(ReconstructionAlgorithm):
                         )
 
         self._hesse_reco_pdf.savefig(fig)
+        plt.close(fig)
     
     def _finalise(self):
         self._pdf.close()
