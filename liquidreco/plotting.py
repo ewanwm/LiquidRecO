@@ -1,24 +1,33 @@
-import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import cm
 import matplotlib.animation as animation
 
-import typing 
-from liquidreco.hit import Hit, Hit2D, Hit3D
+import typing
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from liquidreco.hit import Hit, Hit2D, Hit3D
+
+
 
 
 def make_corner_plot(
         fig,
         axs, 
-        hits:typing.List[Hit3D],
+        hits:typing.List['Hit3D'],
         charge_cutoff=200.0,
         cmap=plt.get_cmap("coolwarm"),
         marker=".",
         plot_cbar = True,
-        include_fibers = False):
+        include_fibers = False,
+        colour_override:str = None):
 
-    c = [cmap(ev.weight / charge_cutoff) for ev in hits]
+    c= colour_override
+
+    if c is None:
+        c = [cmap(ev.weight / charge_cutoff) for ev in hits]
+    
     s = [0.1*(min(ev.weight,charge_cutoff) / charge_cutoff) for ev in hits]
 
     axs[0,0].scatter(
@@ -122,31 +131,42 @@ def make_corner_plot_fiber_hits(
         z_fiber_hits,
         charge_cutoff=100.0,
         cmap=plt.get_cmap("coolwarm"),
+        colour_override:str = None,
     ):
+
+    c = colour_override
+    
+    if colour_override is None:
+        c = [cmap(ev.weight / charge_cutoff) for ev in y_fiber_hits]
 
     axs[0,0].scatter(
         [hit.x for hit in y_fiber_hits],
         [hit.z for hit in y_fiber_hits],
         s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in y_fiber_hits], 
-        c = [cmap(ev.weight / charge_cutoff) for ev in y_fiber_hits]
-        
+        c = c
     )
     axs[0,0].set_ylabel("z [mm]")
     
+    if colour_override is None:
+        c = [cmap(ev.weight / charge_cutoff) for ev in z_fiber_hits]
+
     axs[1,0].scatter(
         [hit.x for hit in z_fiber_hits],
         [hit.y for hit in z_fiber_hits],
         s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in z_fiber_hits], 
-        c = [cmap(ev.weight / charge_cutoff) for ev in z_fiber_hits]
+        c = c
     )
     axs[1,0].set_xlabel("x [mm]")
     axs[1,0].set_ylabel("y [mm]")
 
+    if colour_override is None:
+        c = [cmap(ev.weight / charge_cutoff) for ev in x_fiber_hits]
+    
     mappable = axs[1,1].scatter(
         [hit.z for hit in x_fiber_hits],
         [hit.y for hit in x_fiber_hits],
         s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in x_fiber_hits], 
-        c = [cmap(ev.weight / charge_cutoff) for ev in x_fiber_hits]
+        c = c
     )
     axs[1,1].set_xlabel("z [mm]")
     
