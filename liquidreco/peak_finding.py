@@ -22,6 +22,8 @@ class LaplaceFitter:
         neighbourhood_dist:float = 45.0,
         peak_candidate_threshold:float = 100.0,
         amplitude_threshold:float = 50.0,
+        fix_width: float = None,
+        min_n_neighbours: int = 0,
         make_plots = False
     ):
         """Initialiser
@@ -32,13 +34,23 @@ class LaplaceFitter:
         :type peak_candidate_threshold: float, optional
         :param amplitude_threshold: Fibers whose post-fit laplace distribution amplitude is above this are considered peak hits, defaults to 50.0
         :type amplitude_threshold: float, optional
+        :param fix_width: Set this to fix the width of the laplace distributions in the fit. If None then it will be fit as a parameter, defaults to None
+        :type fix_width: float, optional
+        :param min_n_neighbours: Fibers must have this many other fibers in their neighbourhood to be included in the fit, defaults to 0
+        :type min_n_neighbours: int, optional
+        :param make_plots: Whether this fitter should make debug plots while running
+        :type fix_width: bool, optional
         """
 
         self._neighbourhood_dist:float = neighbourhood_dist
         self._peak_candidate_threshold:float = peak_candidate_threshold
         self._amplitude_threshold:float = amplitude_threshold
-        self._make_plots = make_plots
+        self._fix_width:float = fix_width
+        self._min_n_neighbours = min_n_neighbours
+        self._make_plots:bool = make_plots
 
+        ## use this to define neighbourhood around fibers
+        self._neighbour_algo = NearestNeighbors(radius = self._neighbourhood_dist)
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("LaplaceFitter-plots.pdf")
 
@@ -50,8 +62,7 @@ class LaplaceFitter:
     def __call__(
         self,
         fiber_hits: typing.List['Hit2D'], 
-        u:str, v:str,
-        min_n_neighbours:int = 0
+        u:str, v:str
     ) -> typing.Tuple[typing.List['Hit2D']]:
         """Find peaks by attempting to fit laplace distributions to prominent fibers
 
@@ -61,8 +72,6 @@ class LaplaceFitter:
         :type u: str
         :param v: The v direction, should be "x", "y" or "z"
         :type v: str
-        :param min_n_neighbours: Fibers must have this many other fibers in their neighbourhood to be included in the fit, defaults to 0
-        :type min_n_neighbours: int, optional
         :return: Peak hits found by the fit
         :rtype: typing.Tuple[typing.List['Hit2D']]
         """
@@ -71,15 +80,11 @@ class LaplaceFitter:
         
         ## get positions of the hits for convenience
         positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in fiber_hits])
-
-        ## use this to define neighbourhood around fibers
-        neighbour_algo = NearestNeighbors(radius = self._neighbourhood_dist)
     
         ## first do a check on the number of neighbours of each hit, discard ones with too few
         ## this speeds up algorithm as we don't want to consider things that are clearly not peaks
-        _, fiber_neighbour_indices = neighbour_algo.fit(positions).radius_neighbors(positions)
-        considered_hits = [fiber_hits[i] for i in range(len(fiber_hits)) if fiber_neighbour_indices[i].shape[0] > min_n_neighbours]
-        considered_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in considered_hits])
+        _, fiber_neighbour_indices = self._neighbour_algo.fit(positions).radius_neighbors(positions)
+        considered_hits = [fiber_hits[i] for i in range(len(fiber_hits)) if fiber_neighbour_indices[i].shape[0] > self._min_n_neighbours]
 
         print(f"  - LAPLACE FIT: n {u}{v} fibers passing N neighbours cut: {len(considered_hits)}")
 
@@ -88,23 +93,19 @@ class LaplaceFitter:
         
         ## now apply condition on the charge in the fiber
         peak_candidates = [hit for hit in considered_hits if hit.weight > self._peak_candidate_threshold]
-        peak_candidate_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in peak_candidates])
 
         print(f"  - LAPLACE FIT: n {u}{v} peak candidate fibers: {len(peak_candidates)}")
 
         if len(peak_candidates) == 0:
             return []
-        
-        ## now get neighbours of the peak candidates
-        neighbour_distances, neighbour_indices = neighbour_algo.fit(peak_candidate_positions).radius_neighbors(considered_positions)
 
         ## now do the fit fit
         try:
             laplace_amplitudes = self._fit_laplace(
-                considered_positions, 
-                charges=np.array([hit.weight for hit in considered_hits]), 
-                neighbour_distances=neighbour_distances, 
-                neighbour_indices=neighbour_indices, 
+                considered_hits,
+                peak_candidates,
+                u,
+                v
             )
 
         ## fit might fail for whatever reason, but we don't want that to bring the whole thing crashing down
@@ -115,89 +116,39 @@ class LaplaceFitter:
         
         return [peak_candidates[i] for i in range(len(peak_candidates)) if laplace_amplitudes[i] > self._amplitude_threshold]
 
-    def _get_laplace_fn(
-            self, 
-            fiber_positions:np.ndarray, 
-            fiber_charges:np.ndarray, 
-            neighbour_distances:np.array, 
-            neighbour_indices:typing.List[np.array], 
-            fix_width:float=None
-        ) -> typing.Callable:
-        """Construct the ensemble of laplace functions used for fitting
-
-        :param fiber_positions: Positions of all of the fibers included in the fit
-        :type fiber_positions: np.ndarray
-        :param fiber_charges: Measured charges for all fibers included in the fit
-        :type fiber_charges: np.ndarray
-        :param neighbour_distances: The distances from all fibers to the peak candidates
-        :type neighbour_distances: np.array
-        :param neighbour_indices: The indices indicating which peak candidate fibers contribute to the light in each fiber
-        :type neighbour_indices: np.array
-        :param fix_width: Set this to fix the width of the laplace distributions in the fit. If None then it will be fit as a parameter, defaults to None
-        :type fix_width: float, optional
-        :return: Function that predicts charges in fibers, can then be used in fit.
-        :rtype: typing.Callable
-        """
-
-        N_FIBERS = len(fiber_positions)
-        
-        peak_candidates = [i for i in range(N_FIBERS) if fiber_charges[i] > self._peak_candidate_threshold]
-
-        N_PEAK_CANDIDATES = len(peak_candidates)
-
-        p0 = [1.0 for _ in range(N_PEAK_CANDIDATES)] ##2.0 * fiber_charges[i] for i in range(N_PEAK_CANDIDATES)]
-        p0.append(1.0) # <- the width param
-
-        def _laplace_fn(x_data=None, *params, fix_width:float=fix_width):
-
-            amplitudes = np.array(params[:N_PEAK_CANDIDATES])
-
-            if fix_width is None:
-                width      = params[N_PEAK_CANDIDATES]
-            else:
-                width = fix_width
-
-            ret_charges = np.zeros(N_FIBERS)
-
-            for fiber_index in range(N_FIBERS):
-                    
-                    neighbour_amplitudes = amplitudes[neighbour_indices[fiber_index]]
-
-                    l = neighbour_amplitudes * laplace.pdf( neighbour_distances[fiber_index] / width ) / width
-
-                    ret_charges[fiber_index] = np.sum(l)
-
-            return ret_charges
-
-        return _laplace_fn, p0
-
     def _fit_laplace(
             self, 
-            fiber_positions:np.ndarray, 
-            charges:np.array, 
-            neighbour_distances:np.array, 
-            neighbour_indices:typing.List[np.array],
+            hits:typing.List['Hit2D'],
+            peak_candidates:typing.List['Hit2D'],
+            u:str,
+            v:str,
         ) -> typing.List[float]:
         """Performs the fit of the laplace distributions
 
-        :param fiber_positions: Positions of all fibers considered in the fit
-        :type fiber_positions: np.ndarray
-        :param charges: measured charges of all fibers considered in the fit
-        :type charges: np.array
-        :param neighbour_distances: Distances from each fiber to peak candidates
-        :type neighbour_distances: np.array
-        :param neighbour_indices: indices defining which peak candidate should contribute to each fibers charge
-        :type neighbour_indices: typing.List[np.array]
+        :param hits: The hits that should be considered in the fit
+        :type hits: typing.List['Hit2D'] 
+        :param peak_candidates: The hits that should be considered peak candidates
+        :type peak_candidates: typing.List['Hit2D'] 
+        :param u: The u direction, should be "x", "y" or "z"
+        :type u: str
+        :param v: The v direction, should be "x", "y" or "z"
+        :type v: str
         :return: The fitted laplace amplitudes of all peak candidate fibers
         :rtype: typing.List[float]
         """
+
+        fiber_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in hits])
+        peak_candidate_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in peak_candidates])
+        
+        ## now get neighbours of the peak candidates
+        neighbour_distances, neighbour_indices = self._neighbour_algo.fit(peak_candidate_positions).radius_neighbors(fiber_positions)
+        charges = np.array([hit.weight for hit in hits])
 
         laplace_fn, p0 = self._get_laplace_fn(
             fiber_positions, 
             charges, 
             neighbour_distances, 
-            neighbour_indices,
-            fix_width=12.0
+            neighbour_indices
         )
 
         optimal_params, cov_mat = curve_fit(laplace_fn, xdata=None, ydata=charges, p0=p0, bounds=(0.0, np.inf))
@@ -232,7 +183,7 @@ class LaplaceFitter:
                 bins=(x_bins, y_bins), 
                 cmap=plt.get_cmap("coolwarm"),
                 #cmin = 0.0001,
-                #vmax = 100.0
+                vmax = self._peak_candidate_threshold
             )
 
             self._pdf.savefig(fig)
@@ -245,6 +196,59 @@ class LaplaceFitter:
 
         return optimal_params.tolist()[:-1]
     
+    def _get_laplace_fn(
+            self, 
+            fiber_positions:np.ndarray, 
+            fiber_charges:np.ndarray, 
+            neighbour_distances:np.array, 
+            neighbour_indices:typing.List[np.array],
+        ) -> typing.Callable:
+        """Construct the ensemble of laplace functions used for fitting
+
+        :param fiber_positions: Positions of all of the fibers included in the fit
+        :type fiber_positions: np.ndarray
+        :param fiber_charges: Measured charges for all fibers included in the fit
+        :type fiber_charges: np.ndarray
+        :param neighbour_distances: The distances from all fibers to the peak candidates
+        :type neighbour_distances: np.array
+        :param neighbour_indices: The indices indicating which peak candidate fibers contribute to the light in each fiber
+        :type neighbour_indices: np.array
+        :return: Function that predicts charges in fibers, can then be used in fit.
+        :rtype: typing.Callable
+        """
+
+        N_FIBERS = len(fiber_positions)
+        
+        peak_candidates = [i for i in range(N_FIBERS) if fiber_charges[i] > self._peak_candidate_threshold]
+
+        N_PEAK_CANDIDATES = len(peak_candidates)
+
+        p0 = [2.0 * fiber_charges[i] for i in range(N_PEAK_CANDIDATES)]
+        p0.append(1.0) # <- the width param
+
+        def _laplace_fn(x_data=None, *params, fix_width:float=self._fix_width):
+
+            amplitudes = np.array(params[:N_PEAK_CANDIDATES])
+
+            if fix_width is None:
+                width      = params[N_PEAK_CANDIDATES]
+            else:
+                width = fix_width
+
+            ret_charges = np.zeros(N_FIBERS)
+
+            for fiber_index in range(N_FIBERS):
+                    
+                    neighbour_amplitudes = amplitudes[neighbour_indices[fiber_index]]
+
+                    l = neighbour_amplitudes * laplace.pdf( neighbour_distances[fiber_index] / width ) / width
+
+                    ret_charges[fiber_index] = np.sum(l)
+
+            return ret_charges
+
+        return _laplace_fn, p0
+
 
 class PeakFinder2D:
     """Finds peaks in raw fiber hits and performs position corrections
@@ -274,6 +278,7 @@ class PeakFinder2D:
         """
         self._pdf.close()
         self._cluster_pdf.close()
+        self._laplace_fitter.finalise()
 
     def __call__(
         self, 
