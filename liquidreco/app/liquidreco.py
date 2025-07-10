@@ -48,6 +48,7 @@ def main():
     plotting_args.add_argument("--make-gifs", action='store_true', required=False)
     plotting_args.add_argument("--make-fiber-hit-plots", action='store_true', required=False)
     plotting_args.add_argument("--make-3d-hit-plots", action='store_true', required=False)
+    plotting_args.add_argument("--make-debug-plots", action='store_true', required=False)
     plotting_args.add_argument("--charge-cutoff", default=100.0, type=float, required=False)
     plotting_args.add_argument("--gif-timesteps", default=1.0, type=float, required=False)
 

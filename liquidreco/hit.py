@@ -1,11 +1,12 @@
 import typing
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 from scipy import ndimage
 import math as m
 
-
 class Hit:
+    """Very generic detector hit, probably shouldn't use directly, should instead use one of the derived classes
+    """
+
     def __init__(
         self,
         x = None,
@@ -16,12 +17,22 @@ class Hit:
     ):
         
         self.x = x
+        """x position of the hit"""
         self.y = y
+        """y position of the hit"""
         self.z = z
+        """z position of the hit"""
         self.time = time
+        """time of the hit"""
         self.weight = weight
+        """the "weight" of this hit. Typically the charge/light collected"""
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Summarise this hit as a string
+
+        :return: summary
+        :rtype: str
+        """
         return f"pos = ({self.x}, {self.y}, {self.z}) :: t = {self.time} :: w = {self.weight}"
         
 class Hit2D(Hit):
@@ -151,7 +162,7 @@ class Hit3D(Hit):
     """Describes a 3D hit constructed from two or three WLS fibers"""
 
     @staticmethod
-    def from_fiber_hits(x_fiber_hit:Hit2D, y_fiber_hit:Hit2D, z_fiber_hit:Hit2D=None, n_required_peaks:int = None) -> 'Hit3D':
+    def from_fiber_hits(x_fiber_hit:Hit2D=None, y_fiber_hit:Hit2D=None, z_fiber_hit:Hit2D=None, n_required_peaks:int = None) -> 'Hit3D':
         """Create a Hit3D from some 2D fiber hits
 
         :param x_fiber_hit: The x fiber
@@ -327,8 +338,6 @@ class Event():
         
         self.hits_3d:list[Hit] = hits_3d
 
-
-
 def build_2d_hits(positions:np.ndarray, weights:np.ndarray, times:np.ndarray,
         x_fiber_x_pos:float = 0.0, y_fiber_y_pos:float = 60.0, z_fiber_z_pos:float = 910.0) -> typing.Tuple[typing.List[Hit]]:
     
@@ -403,186 +412,6 @@ def build_2d_hits(positions:np.ndarray, weights:np.ndarray, times:np.ndarray,
 
     return x_fiber_hits, y_fiber_hits, z_fiber_hits
     
-def _find_peak_hits(
-    main_hit:Hit2D,
-    line_hits:list[Hit2D],
-    direction:str
-):
-    
-    # print()
-    # print("###########################")
-    # print(f"direction = {direction}")
-    # print(f"main hit: {main_hit}")
-    # input()
-    ## will be the list of all hits that are part of the peak
-    ret_list = []
-
-    ## sort by the direction coordinate so that the main hit will be in the middle
-    line_hits.sort(key = lambda h: getattr(h, direction))
-
-
-    # print("sorted hits:")
-    # for sorted_hit in line_hits:
-    #     main_arrow = ""
-    #     if sorted_hit is main_hit:
-    #         main_arrow = " <- main"
-    #     print("  " + str(sorted_hit) + main_arrow)
-
-    ## get the index of the main hit in the list
-    main_hit_position = 0
-    for test_hit in line_hits:
-        if test_hit is main_hit:
-            break
-        main_hit_position += 1
-    
-
-    current_charge = float(main_hit.weight)
-    for i in range(main_hit_position - 1, -1, -1):
-
-        if line_hits[i].weight > current_charge:
-            break
-
-        current_charge = float(line_hits[i].weight)
-        # input(f"adding hit : {line_hits[i]}")
-        ret_list.append(line_hits[i])
-
-
-    current_charge = float(main_hit.weight)
-    for i in range(main_hit_position + 1, len(line_hits)):
-
-        if line_hits[i].weight > current_charge:
-            break
-
-        current_charge = float(line_hits[i].weight)
-        # input(f"adding hit : {line_hits[i]}")
-        ret_list.append(line_hits[i])
-
-
-    return ret_list
-
-
-def _get_diagonal_neighbours(hit:Hit, neighbourhood:typing.List[Hit], u:str, v:str, u_pitch:float, v_pitch:float, diagonal_sign = +1):
-    
-    # print()
-    # print("finding diagonal")
-
-    ret_list = list()
-    for neighbour in neighbourhood:
-        u_dist = (getattr(neighbour, u) - getattr(hit, u)) / u_pitch
-        v_dist = (getattr(neighbour, v) - getattr(hit, v)) / v_pitch
-        
-        #print(f"u diff = {u_dist} :: v diff = {v_dist}")
-        if abs(u_dist - diagonal_sign * v_dist) < 0.0001:
-            #print("adding!")
-
-            ret_list.append(neighbour)
-
-    return ret_list
-
-def find_2d_peaks(
-        x_fiber_hits, y_fiber_hits, z_fiber_hits, 
-        neighbourhood_dist = 15.1, extended_neighbourhood_dist = 30.1,
-        u_pitch=10.0, v_pitch=10.0) -> typing.Tuple[typing.List[Hit]]:
-
-    x_peak_hits = []
-    y_peak_hits = []
-    z_peak_hits = []
-
-    neighbour_algo = NearestNeighbors(radius = neighbourhood_dist)
-    extended_neighbour_algo = NearestNeighbors(radius = extended_neighbourhood_dist)
-
-    for peak_hits, fiber_hits in zip(
-        [x_peak_hits, y_peak_hits, z_peak_hits],
-        [x_fiber_hits, y_fiber_hits, z_fiber_hits]
-    ):
-        
-        if fiber_hits is x_fiber_hits:
-            u = "y"
-            v = "z"
-        elif fiber_hits is y_fiber_hits:
-            u = "x"
-            v = "z"
-        elif fiber_hits is z_fiber_hits:
-            u = "x"
-            v = "y"
-
-        data = np.array([[getattr(hit, u), getattr(hit, v)] for hit in fiber_hits])
-        
-        _, indices = neighbour_algo.fit(data).radius_neighbors(data)
-        _, extended_indices = extended_neighbour_algo.fit(data).radius_neighbors(data)
-
-        for hit_id in range(len(fiber_hits)):
-            
-            hit = fiber_hits[hit_id]
-            charge = hit.weight
-
-            neighbourhood = [fiber_hits[id] for id in indices[hit_id]]
-            extended_neighbourhood = [fiber_hits[id] for id in extended_indices[hit_id]]
-
-            u_line_hits = [neighbour for neighbour in neighbourhood if getattr(neighbour, v) == getattr(hit, v)]
-            v_line_hits = [neighbour for neighbour in neighbourhood if getattr(neighbour, u) == getattr(hit, u)]
-            
-            u_line_charges = np.array([neighbour.weight for neighbour in u_line_hits])
-            v_line_charges = np.array([neighbour.weight for neighbour in v_line_hits])
-
-            extended_u_line_hits = [neighbour for neighbour in extended_neighbourhood if getattr(neighbour, v) == getattr(hit, v)]
-            extended_v_line_hits = [neighbour for neighbour in extended_neighbourhood if getattr(neighbour, u) == getattr(hit, u)]
-
-            u_info_hits = [hit]
-            v_info_hits = [hit]
-
-            is_peak = False
-            if np.sum(u_line_charges < charge) >= 2:
-                is_peak = True
-                local_peak_hits = _find_peak_hits(hit, extended_u_line_hits, u)
-                for h in local_peak_hits:
-                    u_info_hits.append(h)
-
-            if np.sum(v_line_charges < charge) >= 2:
-                is_peak = True
-                local_peak_hits = _find_peak_hits(hit, extended_v_line_hits, v)
-                for h in local_peak_hits:
-                    v_info_hits.append(h)
-
-
-            ## check if it's a diagonal peak
-
-            if not is_peak:
-                diag_uv_line_hits = _get_diagonal_neighbours(hit, neighbourhood, u, v, u_pitch, v_pitch)
-                diag_vu_line_hits = _get_diagonal_neighbours(hit, neighbourhood, u, v, u_pitch, v_pitch, diagonal_sign=-1)
-
-                diag_uv_line_charges = np.array([neighbour.weight for neighbour in diag_uv_line_hits])
-                diag_vu_line_charges = np.array([neighbour.weight for neighbour in diag_vu_line_hits])
-
-                extended_diag_uv_line_hits = _get_diagonal_neighbours(hit, extended_neighbourhood, u, v, u_pitch, v_pitch)
-                extended_diag_vu_line_hits = _get_diagonal_neighbours(hit, extended_neighbourhood, u, v, u_pitch, v_pitch, diagonal_sign=-1)
-
-                if np.sum(diag_uv_line_charges < charge) >= 2:
-                    is_peak = True
-                    local_peak_hits = _find_peak_hits(hit, extended_diag_uv_line_hits, u)
-                    for h in local_peak_hits:
-                        u_info_hits.append(h)
-                        v_info_hits.append(h)
-
-                if np.sum(diag_vu_line_charges < charge) >= 2:
-                    is_peak = True
-                    local_peak_hits = _find_peak_hits(hit, extended_diag_vu_line_hits, u)
-                    for h in local_peak_hits:
-                        u_info_hits.append(h)
-                        v_info_hits.append(h)
-                
-            if is_peak:
-                new_hit = Hit2D.copy(hit)
-
-                setattr(new_hit, u, Hit2D.get_mean_pos(u_info_hits, u))
-                setattr(new_hit, v, Hit2D.get_mean_pos(v_info_hits, v))
-
-                peak_hits.append(new_hit)
-
-
-    return x_peak_hits, y_peak_hits, z_peak_hits
-
-
 def build_3d_hits(
         x_fiber_hits:typing.List[Hit2D], y_fiber_hits:typing.List[Hit2D], z_fiber_hits:typing.List[Hit2D], 
         require_3_fibers:bool = True,

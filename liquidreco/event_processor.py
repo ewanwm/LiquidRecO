@@ -7,7 +7,8 @@ from tqdm import tqdm
 
 from liquidreco.reconstruction import LINSCAN, LocalMeanDBSCAN, HoughTransform, HesseRidgeDetection
 from liquidreco.plotting import make_corner_plot, make_corner_plot_fiber_hits, make_rotating_gif
-from liquidreco.hit import Event, build_2d_hits, build_3d_hits, local_normalisation, find_2d_peaks
+from liquidreco.hit import Event, build_2d_hits, build_3d_hits, local_normalisation
+from liquidreco.peak_finding import PeakFinder2D
 
 
 class EventProcessor:
@@ -99,6 +100,8 @@ class EventProcessor:
                 None,
             )
 
+        self._peak_finder = PeakFinder2D(peak_prominance_threshold=0.7, make_plots=self.args.make_debug_plots)
+
 
     def finalise(self):
         if self._corner_pdf is not None:
@@ -112,6 +115,9 @@ class EventProcessor:
 
         if self._fit_algorithm is not None:
             self._fit_algorithm.finalise()
+
+        if self._peak_finder is not None:
+            self._peak_finder.finalise()
 
     def process(self):
 
@@ -140,7 +146,7 @@ class EventProcessor:
             )
 
             if self.args.find_2d_peaks:
-                x_fiber_hits, y_fiber_hits, z_fiber_hits = find_2d_peaks(
+                x_fiber_hits, y_fiber_hits, z_fiber_hits = self._peak_finder(
                     x_fiber_hits,
                     y_fiber_hits,
                     z_fiber_hits
@@ -187,6 +193,8 @@ class EventProcessor:
                 )
 
                 self._fibers_pdf.savefig(fig)
+            
+            plt.close(fig)
 
 
             if self.args.make_3d_hit_plots:
@@ -238,4 +246,4 @@ class EventProcessor:
         )
 
         self._3d_hits_pdf.savefig(fig)
-        plt.clf()
+        plt.close(fig)
