@@ -7,6 +7,12 @@ Hits
    .. automodule:: liquidreco.hit
       :members:
 
+============
+Peak_finding
+============
+   .. automodule:: liquidreco.peak_finding
+      :members:
+
 ==============
 Reconstruction
 ==============
