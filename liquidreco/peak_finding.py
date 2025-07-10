@@ -256,16 +256,32 @@ class PeakFinder2D:
     
     def __init__(
             self, 
-            peak_prominance_threshold:float,
+            peak_prominance_threshold:float = 1.0,
+            fit_blobs:bool = False,
             make_plots:bool = False,
             DBSCAN_args = {"eps": 10.5},
             laplace_fit_args = {},
         ):
+        """Initialiser
+
+        :param peak_prominance_threshold: For a hit to be considered a "simple" peak, its neighbours must have smaller charge than peak_prominance_threshold * hit charge. 1.0 is most general, smaller values mean only sharper peaks get accepted.
+        :type peak_prominance_threshold: float
+        :param fit_blobs: Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass
+        :type fit_blobs: bool
+        :param make_plots: Whether to make debug plots, defaults to False
+        :type make_plots: bool, optional
+        :param DBSCAN_args: arguments to pass to the DBSCAN algorithm used to build "blob" clusters, defaults to {"eps": 10.5}
+        :type DBSCAN_args: dict, optional
+        :param laplace_fit_args: parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs, defaults to {}
+        :type laplace_fit_args: dict, optional
+        """
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-plots.pdf")
         self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
 
         self._peak_prominance_threshold = peak_prominance_threshold
+
+        self._fit_blobs = fit_blobs
 
         self._make_plots = make_plots
 
@@ -345,13 +361,15 @@ class PeakFinder2D:
 
             print(f"used {u}{v} hits: {len(_used)}, unused {u}{v} hits: {len(_unused)}")
 
-            unused_clusters = self.cluster_hits(list(_unused), u, v)
-            print(f"N {u}{v} clusters: {len(unused_clusters)}")
-            for cluster in unused_clusters:
-                _laplace_peaks = self._laplace_fitter(cluster, u, v)
-            
-                for p in _laplace_peaks:
-                    laplace_peak_hits.append(p)
+            if self._fit_blobs:
+                ## try and fit the unused hits
+                unused_clusters = self.cluster_hits(list(_unused), u, v)
+                print(f"N {u}{v} clusters: {len(unused_clusters)}")
+                for cluster in unused_clusters:
+                    _laplace_peaks = self._laplace_fitter(cluster, u, v)
+                
+                    for p in _laplace_peaks:
+                        laplace_peak_hits.append(p)
 
         ### make plot of the hits, colour coded depending on if they have been used
         if self._make_plots:
@@ -397,7 +415,11 @@ class PeakFinder2D:
             self._pdf.savefig(fig)
             plt.close(fig)
 
-        return x_peak_hits, y_peak_hits, z_peak_hits
+        return (
+            x_peak_hits + laplace_x_peak_hits, 
+            y_peak_hits + laplace_y_peak_hits, 
+            z_peak_hits + laplace_z_peak_hits
+        )
 
     def cluster_hits(
         self,
@@ -452,7 +474,7 @@ class PeakFinder2D:
             self,
             fiber_hits:typing.List['Hit2D'], 
             u:str, v:str,
-            peak_prominance_threshold:float = 0.0,
+            peak_prominance_threshold:float = 1.0,
             neighbourhood_dist:float = 15.1, extended_neighbourhood_dist:float = 30.1,
             u_pitch:float=10.0, v_pitch:float=10.0
         ) -> typing.Tuple[typing.List['Hit2D'], typing.Set['Hit2D'], typing.Set['Hit2D']]:
@@ -478,7 +500,7 @@ class PeakFinder2D:
             charge = hit.weight
             
             ## modify charge based on the prominence threshold supplied
-            modified_charge = charge * (1.0 - peak_prominance_threshold)
+            modified_charge = charge * peak_prominance_threshold
 
             neighbourhood = [fiber_hits[id] for id in indices[hit_id]]
             extended_neighbourhood = [fiber_hits[id] for id in extended_indices[hit_id]]
