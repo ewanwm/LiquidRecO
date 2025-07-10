@@ -7,7 +7,8 @@ from tqdm import tqdm
 
 from liquidreco.reconstruction import LINSCAN, LocalMeanDBSCAN, HoughTransform, HesseRidgeDetection
 from liquidreco.plotting import make_corner_plot, make_corner_plot_fiber_hits, make_rotating_gif
-from liquidreco.hit import Event, build_2d_hits, build_3d_hits, local_normalisation, PeakFinder2D
+from liquidreco.hit import Event, build_2d_hits, build_3d_hits, local_normalisation
+from liquidreco.peak_finding import PeakFinder2D
 
 
 class EventProcessor:
