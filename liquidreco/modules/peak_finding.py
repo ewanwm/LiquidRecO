@@ -2,16 +2,21 @@ from liquidreco.plotting import make_corner_plot, make_corner_plot_fiber_hits
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.backends.backend_pdf
 import numpy as np
 import scipy
 from scipy.stats import laplace
 from scipy.optimize import curve_fit
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import DBSCAN
+from skimage.feature import hessian_matrix, hessian_matrix_eigvals
+from scipy.linalg import eig
 
 import typing
 
 from liquidreco.hit import Hit, Hit2D, Hit3D
+from liquidreco.modules.module_base import ModuleBase
+from liquidreco.event import Event
 
 class LaplaceFitter:
     """Performs a fit of an ensemble of laplace distributions to observed collected charges in fibers in order to try to determine which 
@@ -250,13 +255,14 @@ class LaplaceFitter:
         return _laplace_fn, p0
 
 
-class PeakFinder2D:
+class PeakFinder2D(ModuleBase):
     """Finds peaks in raw fiber hits and performs position corrections
     """
     
     def __init__(
             self, 
             peak_prominance_threshold:float = 1.0,
+            peak_candidate_weight_threshold: float = 0.0,
             fit_blobs:bool = False,
             make_plots:bool = False,
             DBSCAN_args = {"eps": 10.5},
@@ -265,6 +271,8 @@ class PeakFinder2D:
         """Initialiser
 
         :param peak_prominance_threshold: For a hit to be considered a "simple" peak, its neighbours must have smaller charge than peak_prominance_threshold * hit charge. 1.0 is most general, smaller values mean only sharper peaks get accepted.
+        :type peak_prominance_threshold: float
+        :param peak_candidate_weight_threshold: For a hit to be considered a peak candidate, it must have at least this weight. Defaults to 0.0.
         :type peak_prominance_threshold: float
         :param fit_blobs: Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass
         :type fit_blobs: bool
@@ -280,40 +288,37 @@ class PeakFinder2D:
         self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
 
         self._peak_prominance_threshold = peak_prominance_threshold
-
+        self._peak_candidate_weight_threshold = peak_candidate_weight_threshold
         self._fit_blobs = fit_blobs
-
         self._make_plots = make_plots
-
         self._clusterer = DBSCAN(**DBSCAN_args)
-
         self._laplace_fitter = LaplaceFitter(**laplace_fit_args, make_plots=make_plots)
 
-    def finalise(self):
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+        self.outputs = [
+            "x_peak_hits", "y_peak_hits", "z_peak_hits",
+            "unused_x_hits", "unused_y_hits", "unused_z_hits",
+            "laplace_x_peaks", "laplace_y_peaks", "laplace_z_peaks"
+        ]
+
+    def _finalise(self):
         """Tidy up and close open pdfs
         """
         self._pdf.close()
         self._cluster_pdf.close()
         self._laplace_fitter.finalise()
 
-    def __call__(
-        self, 
-        x_fiber_hits:typing.List['Hit2D'] = None,
-        y_fiber_hits:typing.List['Hit2D'] = None,
-        z_fiber_hits:typing.List['Hit2D'] = None
-    ) -> typing.Tuple[typing.List['Hit2D']]:
+    def _process(self, event: Event) -> None:
         """Perform the peak finding
 
-        :param x_fiber_hits: Hits from x fibers (fibers orthogonal to the yz plane), defaults to None
-        :type x_fiber_hits: typing.List['Hit2D'], optional
-        :param y_fiber_hits: Hits from y fibers (fibers orthogonal to the xz plane), defaults to None
-        :type y_fiber_hits: typing.List['Hit2D'], optional
-        :param z_fiber_hits: Hits from z fibers (fibers orthogonal to the xy plane), defaults to None
-        :type z_fiber_hits: typing.List['Hit2D'], optional
         :return: peak hits in each projection
         :rtype: typing.Tuple[typing.List['Hit2D']]
         """
         
+        x_fiber_hits: typing.List['Hit2D'] = event["x_fiber_hits"]
+        y_fiber_hits: typing.List['Hit2D'] = event["y_fiber_hits"]
+        z_fiber_hits: typing.List['Hit2D'] = event["z_fiber_hits"]
+
         x_peak_hits = list()
         y_peak_hits = list()
         z_peak_hits = list()
@@ -349,7 +354,7 @@ class PeakFinder2D:
             elif fiber_hits is z_fiber_hits:
                 u, v = "x", "y"
                 
-            _peaks, _used, _unused = self.find_2d_peaks(fiber_hits, u, v, self._peak_prominance_threshold)
+            _peaks, _used, _unused = self._find_2d_peaks(fiber_hits, u, v)
 
             # add peaks to the outer list
             for p in _peaks:
@@ -359,11 +364,9 @@ class PeakFinder2D:
             for unused_hit in _unused:
                 unused.add(unused_hit)
 
-            print(f"used {u}{v} hits: {len(_used)}, unused {u}{v} hits: {len(_unused)}")
-
             if self._fit_blobs:
                 ## try and fit the unused hits
-                unused_clusters = self.cluster_hits(list(_unused), u, v)
+                unused_clusters = self._cluster_hits(list(_unused), u, v)
                 print(f"N {u}{v} clusters: {len(unused_clusters)}")
                 for cluster in unused_clusters:
                     _laplace_peaks = self._laplace_fitter(cluster, u, v)
@@ -415,13 +418,22 @@ class PeakFinder2D:
             self._pdf.savefig(fig)
             plt.close(fig)
 
-        return (
-            x_peak_hits + laplace_x_peak_hits, 
-            y_peak_hits + laplace_y_peak_hits, 
-            z_peak_hits + laplace_z_peak_hits
-        )
 
-    def cluster_hits(
+        event.add_data("x_peak_hits", x_fiber_hits)
+        event.add_data("y_peak_hits", y_fiber_hits)
+        event.add_data("z_peak_hits", z_fiber_hits)
+        
+        event.add_data("unused_x_hits", x_unused)
+        event.add_data("unused_y_hits", y_unused)
+        event.add_data("unused_z_hits", z_unused)
+        
+        event.add_data("laplace_x_peaks", laplace_x_peak_hits)
+        event.add_data("laplace_y_peaks", laplace_y_peak_hits)
+        event.add_data("laplace_z_peaks", laplace_z_peak_hits)
+
+        return
+            
+    def _cluster_hits(
         self,
         fiber_hits:typing.List['Hit2D'],
         u:str, v:str,
@@ -470,11 +482,10 @@ class PeakFinder2D:
 
         return clusters
         
-    def find_2d_peaks(
+    def _find_2d_peaks(
             self,
             fiber_hits:typing.List['Hit2D'], 
             u:str, v:str,
-            peak_prominance_threshold:float = 1.0,
             neighbourhood_dist:float = 15.1, extended_neighbourhood_dist:float = 30.1,
             u_pitch:float=10.0, v_pitch:float=10.0
         ) -> typing.Tuple[typing.List['Hit2D'], typing.Set['Hit2D'], typing.Set['Hit2D']]:
@@ -494,13 +505,16 @@ class PeakFinder2D:
         _, indices = neighbour_algo.fit(data).radius_neighbors(data)
         _, extended_indices = extended_neighbour_algo.fit(data).radius_neighbors(data)
 
-        for hit_id in range(len(fiber_hits)):
+        for hit_id in reversed(sorted(range(len(fiber_hits)), key=lambda x: fiber_hits.__getitem__(x).weight)):
             
             hit = fiber_hits[hit_id]
             charge = hit.weight
+
+            if charge < self._peak_candidate_weight_threshold:
+                continue
             
             ## modify charge based on the prominence threshold supplied
-            modified_charge = charge * peak_prominance_threshold
+            modified_charge = charge * self._peak_prominance_threshold
 
             neighbourhood = [fiber_hits[id] for id in indices[hit_id]]
             extended_neighbourhood = [fiber_hits[id] for id in extended_indices[hit_id]]
@@ -690,19 +704,224 @@ class PeakFinder2D:
         :return: Hits from the neighbourhood that lie along the specified diagonal
         :rtype: typing.List['Hit2D']
         """
-        
-        # print()
-        # print("finding diagonal")
 
         ret_list = list()
         for neighbour in neighbourhood:
             u_dist = (getattr(neighbour, u) - getattr(hit, u)) / u_pitch
             v_dist = (getattr(neighbour, v) - getattr(hit, v)) / v_pitch
             
-            #print(f"u diff = {u_dist} :: v diff = {v_dist}")
             if abs(u_dist - diagonal_sign * v_dist) < 0.0001:
-                #print("adding!")
 
                 ret_list.append(neighbour)
 
         return ret_list
+
+
+class HesseRidgeDetection2D(ModuleBase):
+    """ Performs simple Hough line transform
+    """
+
+    def __init__(
+            self, 
+            plot_orthogonal_dirs: bool = False,
+            pitch: float = 10.0
+        ):
+
+        super().__init__()
+
+        self._plot_orthogonal_dirs = plot_orthogonal_dirs
+        self._pitch = pitch
+
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-event-examples.pdf")
+        self._hesse_reco_pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-reconstructed-event-examples.pdf")
+
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+    def _gradient(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
+        """Calculate the gradient of an input image using central finite difference
+
+        :param hist: Histogram you want the gradient of
+        :type hist: np.array
+        :param normalise: Do per-bin normalisation to the cantral value
+        :type normalise: bool
+        :return: arrays du and dv containing derivatives wrt u and v
+        :rtype: Tuple[np.array]
+        """
+
+        assert len(hist.shape) == 2, f"Wrong number of dimensions, can only do 2D but got {len(hist.shape)}!"
+
+        u_grad = np.gradient(hist, axis = 0)
+        v_grad = np.gradient(hist, axis = 1)
+
+        if normalise:
+            u_grad = np.divide(u_grad, hist, where = hist != 0.0)
+            v_grad = np.divide(v_grad, hist, where = hist != 0.0)
+
+        return u_grad, v_grad
+    
+    def _hessian(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
+        """Calculate the hessian matrix of an input image using central finite difference
+
+        :param hist: Histogram you want the hessian of
+        :type hist: np.array
+        :param normalise: Do per-bin normalisation to the cantral value
+        :type normalise: bool
+        :return: arrays huu, hvv, huv, hvu containing each of the necessary double derivatives
+        :rtype: Tuple[np.array]
+        """
+
+        du, dv = self._gradient(hist)
+
+        huu, huv = self._gradient(du)
+        hvu, hvv = self._gradient(dv)
+
+        if normalise:
+            huu = np.divide(huu, hist, where = hist != 0.0)
+            huv = np.divide(huv, hist, where = hist != 0.0)
+            hvv = np.divide(hvv, hist, where = hist != 0.0)
+            hvu = np.divide(hvu, hist, where = hist != 0.0)
+
+        return huu, hvv, huv, hvu
+
+    def _process(self, event:Event):
+        """ Perform Hough transform on an event and save the result to a given file
+
+        :param event: Object describing the hits in an event
+        :type event: Event
+        """
+
+        x_fiber_hits = event["x_fiber_hits"]
+        y_fiber_hits = event["y_fiber_hits"]
+        z_fiber_hits = event["z_fiber_hits"]
+
+        for fiber_hits, u_name, v_name in zip(
+            [
+                x_fiber_hits, 
+                y_fiber_hits, 
+                z_fiber_hits
+            ],
+            ["y", "x", "x"],
+            ["z", "z", "y"]
+        ):
+            
+            u_values = [getattr(hit, u_name) for hit in fiber_hits]
+            v_values = [getattr(hit, v_name) for hit in fiber_hits]
+
+            u_bins = np.arange(start=min(u_values) - 3.0 * self._pitch / 2.0, stop=max(u_values) + 5.0 * self._pitch / 2.0, step = self._pitch) 
+            v_bins = np.arange(start=min(v_values) - 3.0 * self._pitch / 2.0, stop=max(v_values) + 5.0 * self._pitch / 2.0, step = self._pitch) 
+
+            hist, _, _ = np.histogram2d(
+                u_values, v_values,
+                bins = (u_bins, v_bins), weights=[hit.weight for hit in fiber_hits]
+            )
+            
+            ## Hessian eigenvalues
+            huu, hvv, huv, hvu = self._hessian(hist)
+            
+            hess_eigenvals = np.ndarray((2, *huu.shape))
+            hess_eigenvecs = np.ndarray((2, 2, *huu.shape))
+            
+            for dim0 in range(0, huu.shape[-2]):
+                for dim1 in range(0, huu.shape[-1]):
+
+                    if(hist[dim0, dim1] == 0.0):
+                        hess_eigenvals[:, dim0, dim1] = 0.0
+                        hess_eigenvecs[:, :, dim0, dim1] = 0.0
+                    
+                    else:
+                        evals, evecs = eig(
+                            np.array(
+                                [
+                                    [huu[dim0, dim1], hvu[dim0, dim1]],
+                                    [huv[dim0, dim1], hvv[dim0, dim1]]
+                                ]
+                            )
+                        )
+
+                        if (np.any(np.imag(evals) != 0.0)):
+                            print(f"WARNING: complex eigenvalues found in Hessian!!!")
+
+                        hess_eigenvals[:, dim0, dim1] = np.real(evals[:])
+                        hess_eigenvecs[:, :, dim0, dim1] = np.real(evecs[:, :])
+
+            ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
+            for dim0 in range(0, hess_eigenvals.shape[-2]):
+                for dim1 in range(0, hess_eigenvals.shape[-1]):
+
+                    if (np.any(hess_eigenvals[:, dim0, dim1] > 0.0)) or (np.all(hess_eigenvals[:, dim0, dim1] == 0.0)):
+                        pass
+
+                    else:
+                        ridgeness[dim0, dim1, 0] = np.linalg.norm(hess_eigenvals[:, dim0, dim1])
+            
+            fig, ax = plt.subplots(1, 8, figsize=(50, 10))
+            ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
+            ax[0].set_title("Original Event")
+
+            ax[1].imshow(huu, cmap=plt.get_cmap("gray"))
+            ax[1].set_title(f"H_{u_name}{u_name}")
+            ax[2].imshow(huv, cmap=plt.get_cmap("gray"))
+            ax[2].set_title(f"H_{u_name}{v_name}")
+            ax[3].imshow(hvu, cmap=plt.get_cmap("gray"))
+            ax[3].set_title(f"H_{v_name}{u_name}")
+            ax[4].imshow(hvv, cmap=plt.get_cmap("gray"))
+            ax[4].set_title(f"H_{v_name}{v_name}")
+
+            du, dv = self._gradient(hist)
+            ax[5].imshow(du, cmap=plt.get_cmap("gray"))
+            ax[5].set_title(f"D_{u_name}")
+            ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
+            ax[6].set_title(f"D_{v_name}")
+
+            #ridgeness = np.clip(-np.max(hess_eigenvals, axis=0), 0.0, 99999.9)
+            ridgeness /= np.max(ridgeness)
+            ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
+            ax[7].set_title("Hessian Filter")
+
+            self._pdf.savefig(fig)
+            plt.close(fig)
+
+            fig = plt.figure(figsize=(10, 10))
+            plt.imshow(ridgeness, cmap=plt.get_cmap("gray"))
+            plt.colorbar()
+            plt.title("Hessian Filter")
+
+            for dim0 in range(0, hess_eigenvecs.shape[-2]):
+                for dim1 in range(0, hess_eigenvecs.shape[-1]):
+
+                    if ridgeness[dim0, dim1] > 0.0:
+                        max_eval_id = np.argmin(hess_eigenvals[:, dim0, dim1])
+
+                        plt.plot(
+                            (
+                                dim1 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
+                                dim1 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
+                            ),
+                            (
+                                dim0 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
+                                dim0 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
+                            ), 
+                            c = "r"
+                        )
+
+                        if self._plot_orthogonal_dirs:
+                            plt.plot(
+                                (
+                                    dim1 - 0.5 * hess_eigenvecs[0, 1 - max_eval_id, dim0, dim1],
+                                    dim1 + 0.5 * hess_eigenvecs[0, 1 - max_eval_id, dim0, dim1]
+                                ),
+                                (
+                                    dim0 + 0.5 * hess_eigenvecs[1, 1 - max_eval_id, dim0, dim1],
+                                    dim0 - 0.5 * hess_eigenvecs[1, 1 - max_eval_id, dim0, dim1]
+                                ), 
+                                c = "b",
+                                linewidth = 0.2
+                            )
+
+            self._hesse_reco_pdf.savefig(fig)
+            plt.close(fig)
+        
+    def _finalise(self):
+        self._pdf.close()
+        self._hesse_reco_pdf.close()
+        
