@@ -2,18 +2,33 @@ import abc
 from abc import ABC
 import typing
 
+from jsonargparse import ActionSubCommands, ArgumentParser, Namespace
+
 from liquidreco.event import Event
 
 class ModuleBase(ABC):
     """Base class of modules that can be run over events.
     
     Any requirements should be given by name in the `requirements` member variable.
-    Any outputs should be given by name in the `outputs` member variable."""
+    Any outputs should be given by name in the `outputs` member variable.
+    
+    To be overrridden
+    -----------------
+    
+    - _process() - REQUIRED
+    - _finalise() - OPTIONAL
+    - _setup_cli_options() - OPTIONAL
+    - _help() - OPTIONAL
+    
+    """
 
     def __init__(self):
 
         self.requirements: typing.List[str] = []
         self.outputs: typing.List[str] = []
+
+        self._arg_parser: ArgumentParser = None
+        self._args: typing.Union[Namespace, typing.Dict[str, typing.Any]] = None
 
     @abc.abstractmethod
     def _process(self, event: Event) -> None:
@@ -30,6 +45,27 @@ class ModuleBase(ABC):
     def _finalise(self) -> None:
         """Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc."""
         pass
+
+    def _setup_cli_options(self, parser: ArgumentParser) -> None:
+        """Override this to set up any command line options for this module 
+
+        The parser passed to this will be a subparser associated with this module. you can call any number of 
+        commands defined by argparse which will then be available inside of your module via the self._args member.
+
+        :param parser: The subparser for this module
+        :type parser: ArgumentParser
+        """
+
+        pass
+
+    def _help(self) -> str:
+        """Should return a help string that will be printed to the command line for this module
+
+        :return: helpful message about your module
+        :rtype: str
+        """
+
+        return ""
 
     def _check_requirements(self, event: Event) ->None:
         """Checks that the event has all the required inputs for this module
@@ -73,3 +109,49 @@ class ModuleBase(ABC):
         """Tear down the module"""
 
         self._finalise()
+
+    def setup_parser(self, parser: ArgumentParser) -> None:
+        """Setup argument parser for this module
+
+        :param parser: The parser to be set up
+        :type parser: ArgumentParser
+        """
+
+        self._setup_cli_options(parser)
+        self._arg_parser = parser
+
+    def parse_args(self, args: typing.List[str]) -> typing.Union[Namespace, typing.Dict[str, typing.Any]]:
+        """Parse arguments for this module passed in from the command line
+
+        This sets the internally used _args variable which lets user code access config
+        arguments, so this should be called before the module is called on any events.
+
+        :param args: List of arguments as strings
+        :type args: typing.List[str]
+        :raises ValueError: if the arg parser has not yet been set up for this module
+        :return: The parsed arguments
+        :rtype: typing.Union[Namespace, typing.Dict[str, typing.Any]]
+        """
+
+        if self._arg_parser is None:
+            raise ValueError("arg parser not set!!! did you forget to call setup_parser()???")
+        
+        self._args = self._arg_parser.parse_args(args)
+        
+        return self._args
+
+    def help(self) -> str:
+        """Get help message for cmd line for this module
+
+        :return: help string
+        :rtype: str
+        """
+
+        help_str = (
+            f"Inputs:  {self.requirements}\n"
+            f"Outputs: {self.outputs}\n"
+            "----------------------------------------\n"
+            f"{self._help()}"
+        )
+
+        return help_str
