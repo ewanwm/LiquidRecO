@@ -258,42 +258,34 @@ class LaplaceFitter:
 class PeakFinder2D(ModuleBase):
     """Finds peaks in raw fiber hits and performs position corrections
     """
+
+    def _help(self) -> str:
+        return """
+This module tries to find peaks in raw 2D hits using a very simple algorithm
+
+Each hit is checked in turn, it is considered to be a peak if in any of the 8 
+directions (up, down, left right and each diagonal). It is the highest point in its local
+neighbourhood.
+"""
     
     def __init__(
-            self, 
-            peak_prominance_threshold:float = 1.0,
-            peak_candidate_weight_threshold: float = 0.0,
-            fit_blobs:bool = False,
-            make_plots:bool = False,
+            self,
             DBSCAN_args = {"eps": 10.5},
             laplace_fit_args = {},
         ):
         """Initialiser
 
-        :param peak_prominance_threshold: For a hit to be considered a "simple" peak, its neighbours must have smaller charge than peak_prominance_threshold * hit charge. 1.0 is most general, smaller values mean only sharper peaks get accepted.
-        :type peak_prominance_threshold: float
-        :param peak_candidate_weight_threshold: For a hit to be considered a peak candidate, it must have at least this weight. Defaults to 0.0.
-        :type peak_prominance_threshold: float
-        :param fit_blobs: Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass
-        :type fit_blobs: bool
-        :param make_plots: Whether to make debug plots, defaults to False
-        :type make_plots: bool, optional
         :param DBSCAN_args: arguments to pass to the DBSCAN algorithm used to build "blob" clusters, defaults to {"eps": 10.5}
         :type DBSCAN_args: dict, optional
         :param laplace_fit_args: parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs, defaults to {}
         :type laplace_fit_args: dict, optional
         """
 
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-plots.pdf")
-        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
+        super().__init__()
 
-        self._peak_prominance_threshold = peak_prominance_threshold
-        self._peak_candidate_weight_threshold = peak_candidate_weight_threshold
-        self._fit_blobs = fit_blobs
-        self._make_plots = make_plots
-        self._clusterer = DBSCAN(**DBSCAN_args)
-        self._laplace_fitter = LaplaceFitter(**laplace_fit_args, make_plots=make_plots)
-
+        self.DBSCAN_args = DBSCAN_args
+        self.laplace_fit_args = laplace_fit_args
+        
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = [
             "x_peak_hits", "y_peak_hits", "z_peak_hits",
@@ -301,6 +293,54 @@ class PeakFinder2D(ModuleBase):
             "laplace_x_peaks", "laplace_y_peaks", "laplace_z_peaks"
         ]
 
+    def _initialise(self):
+
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-plots.pdf")
+        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
+
+        self._clusterer = DBSCAN(**self.DBSCAN_args)
+        self._laplace_fitter = LaplaceFitter(**self.laplace_fit_args, make_plots=self.args.make_plots)
+
+        self._peak_prominance_threshold = self.args.peak_prominance_threshold
+        self._peak_candidate_weight_threshold = self.args.peak_candidate_weight_threshold
+        self._fit_blobs = self.args.fit_blobs
+        self._make_plots = self.args.make_plots
+
+    def _setup_cli_options(self, parser):
+        
+        parser.add_argument(
+            "--peak-prominance-threshold", 
+            help="For a hit to be considered a 'simple' peak, its neighbours must have smaller charge than peak_prominance_threshold * hit charge. 1.0 is most general, smaller values mean only sharper peaks get accepted.", 
+            required = False, default = 1.0, type = float,
+        )
+        parser.add_argument(
+            "--peak_candidate_weight_threshold", 
+            help="For a hit to be considered a peak candidate, it must have at least this weight.", 
+            required = False, default = 0.0, type = float,
+        )
+        parser.add_argument(
+            "--fit-blobs", 
+            help="Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass.", 
+            required = False, default = False, type = bool,
+        )
+        parser.add_argument(
+            "--make-plots", 
+            help="Whether to make debug plots.", 
+            required = False, default = False, type = bool,
+        )
+
+        ## TODO: Figure out how to pass dict into argparse!!!!
+        ## parser.add_argument(
+        ##     "--DBSCAN-args", 
+        ##     help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
+        ##     required = False, default = "{\"eps\": 10.5}",
+        ## )
+        ## parser.add_argument(
+        ##     "--laplace_fit_args", 
+        ##     help="parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs", 
+        ##     required = False, default = "{}",
+        ## )
+        
     def _finalise(self):
         """Tidy up and close open pdfs
         """
