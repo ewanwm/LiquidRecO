@@ -16,6 +16,7 @@ class ModuleBase(ABC):
     -----------------
     
     - _process() - REQUIRED
+    - _initialise() - OPTIONAL
     - _finalise() - OPTIONAL
     - _setup_cli_options() - OPTIONAL
     - _help() - OPTIONAL
@@ -28,7 +29,7 @@ class ModuleBase(ABC):
         self.outputs: typing.List[str] = []
 
         self._arg_parser: ArgumentParser = None
-        self._args: typing.Union[Namespace, typing.Dict[str, typing.Any]] = None
+        self.args: typing.Union[Namespace, typing.Dict[str, typing.Any]] = None
 
     @abc.abstractmethod
     def _process(self, event: Event) -> None:
@@ -42,6 +43,15 @@ class ModuleBase(ABC):
         
         raise NotImplementedError()
     
+    def _initialise(self) -> None:
+        """Set up anything here that needs to be initialised
+        
+        This gets called *AFTER* argument parsing is done so anything that depends on command 
+        line inputs needs to go in here and *NOT* in the __init__() method
+        """
+
+        pass
+    
     def _finalise(self) -> None:
         """Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc."""
         pass
@@ -50,7 +60,7 @@ class ModuleBase(ABC):
         """Override this to set up any command line options for this module 
 
         The parser passed to this will be a subparser associated with this module. you can call any number of 
-        commands defined by argparse which will then be available inside of your module via the self._args member.
+        commands defined by argparse which will then be available inside of your module via self.args.
 
         :param parser: The subparser for this module
         :type parser: ArgumentParser
@@ -105,6 +115,11 @@ class ModuleBase(ABC):
         ## check that all the promised outputs have been added
         self._check_outputs(event)
 
+    def initialise(self) -> None:
+        """Set up the module"""
+
+        self._initialise()
+
     def finalise(self) -> None:
         """Tear down the module"""
 
@@ -136,9 +151,9 @@ class ModuleBase(ABC):
         if self._arg_parser is None:
             raise ValueError("arg parser not set!!! did you forget to call setup_parser()???")
         
-        self._args = self._arg_parser.parse_args(args)
+        self.args = self._arg_parser.parse_args(args)
         
-        return self._args
+        return self.args
 
     def help(self) -> str:
         """Get help message for cmd line for this module
