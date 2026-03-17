@@ -762,21 +762,29 @@ class HesseRidgeDetection2D(ModuleBase):
     """
 
     def __init__(
-            self, 
-            plot_orthogonal_dirs: bool = False,
-            pitch: float = 10.0
+            self
         ):
 
         super().__init__()
 
-        self._plot_orthogonal_dirs = plot_orthogonal_dirs
-        self._pitch = pitch
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+    def _initialise(self) -> None:
+        
+        self._pitch = self.args.pitch
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-event-examples.pdf")
         self._hesse_reco_pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-reconstructed-event-examples.pdf")
 
-        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+    def _setup_cli_options(self, parser):
 
+        ## TODO: Make geometry manager class to store this kind of thing
+        parser.add_argument(
+            "--pitch", 
+            help="The fiber pitch.", 
+            required = False, default = 10.0, type = float,
+        )
+        
     def _gradient(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
         """Calculate the gradient of an input image using central finite difference
 
@@ -943,20 +951,6 @@ class HesseRidgeDetection2D(ModuleBase):
                             ), 
                             c = "r"
                         )
-
-                        if self._plot_orthogonal_dirs:
-                            plt.plot(
-                                (
-                                    dim1 - 0.5 * hess_eigenvecs[0, 1 - max_eval_id, dim0, dim1],
-                                    dim1 + 0.5 * hess_eigenvecs[0, 1 - max_eval_id, dim0, dim1]
-                                ),
-                                (
-                                    dim0 + 0.5 * hess_eigenvecs[1, 1 - max_eval_id, dim0, dim1],
-                                    dim0 - 0.5 * hess_eigenvecs[1, 1 - max_eval_id, dim0, dim1]
-                                ), 
-                                c = "b",
-                                linewidth = 0.2
-                            )
 
             self._hesse_reco_pdf.savefig(fig)
             plt.close(fig)
