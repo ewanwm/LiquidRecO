@@ -25,29 +25,44 @@ class HoughTransform(ModuleBase):
     """ Performs simple Hough line transform
     """
 
-    def __init__(
-            self, 
-            min_charge_thresh = 80.0,
-            max_plot_charge = 100.0,
-            make_gifs = False
-        ):
-            
-            super().__init__()
+    def __init__(self):
+        
+        super().__init__()
 
-            self.min_charge_thresh = min_charge_thresh
-            self.max_plot_charge = max_plot_charge
-            self.make_gifs = make_gifs
+        self.requirements = ["3d_hits"]
 
-            self.hough_finder = Hough3D(
-                neighbour_dist=20.0, min_points_per_line=5, lattice_step_size=10.0
-            )
+    def _setup_cli_options(self, parser):
 
-            self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples.pdf")
-            self._corner_pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples-corner.pdf")
+        parser.add_argument(
+            "--min-charge-thresh", 
+            help="Minimum charge that a hit must have to be included in the track fitting", 
+            required = False, default = 80.0, type = float,
+        )
+        parser.add_argument(
+            "--max-plot-charge", 
+            help="Maximum charge for plots", 
+            required = False, default = 100.0, type = float,
+        )
+        parser.add_argument(
+            "--make-gifs", 
+            help="Maximum charge for plots", 
+            required = False, default = False, type = bool,
+        )
+        
+    def _initialise(self) -> None:
+        
+        self.min_charge_thresh = self.args.min_charge_thresh
+        self.max_plot_charge = self.args.max_plot_charge
+        self.make_gifs = self.args.make_gifs
 
-            self.clusterer = DBSCAN(40.0)
+        self.hough_finder = Hough3D(
+            neighbour_dist=20.0, min_points_per_line=5, lattice_step_size=10.0
+        )
 
-            self.requirements = ["3d_hits"]
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples.pdf")
+        self._corner_pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples-corner.pdf")
+
+        self.clusterer = DBSCAN(40.0)
 
     def _process(self, event:Event):
         """ Perform Hough transform on an event and save the result to a given file
@@ -75,8 +90,6 @@ class HoughTransform(ModuleBase):
 
             return
 
-        #self.clusterer.fit(data)
-
         cluster_ids = self.clusterer.fit_predict(data)
 
         cmap = plt.get_cmap("coolwarm")
@@ -90,8 +103,6 @@ class HoughTransform(ModuleBase):
             c = c,
             alpha = 0.5
         )
-
-        #ax.scatter(data[:, 0], data[:, 1], data[:, 2], s = 0.1, c = cluster_ids, cmap=plt.get_cmap("rainbow"))
 
         corner_fig, corner_axs = plt.subplots(2, 2, sharex='col', sharey='row', figsize=(5, 5))
         corner_fig.suptitle("Hough Transform Tracks")
@@ -112,7 +123,6 @@ class HoughTransform(ModuleBase):
                 corner_axs[1,1].plot(linePoints[i, :, 2], linePoints[i, :, 1])
 
         plt.tight_layout()
-
 
         self._pdf.savefig(fig)
         self._corner_pdf.savefig(corner_fig)
