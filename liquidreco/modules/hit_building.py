@@ -13,24 +13,38 @@ class HitBuilder2D(ModuleBase):
     Takes in raw hit info and turns it into more structiured hits. 
     """
 
-    def __init__(self, x_fiber_x_pos:float = 0.0, y_fiber_y_pos:float = 30.0, z_fiber_z_pos:float = 910.0):
+    def __init__(self):
         """Initialise the module
-
-        :param x_fiber_x_pos: The x position that x fibers have, defaults to 0.0
-        :type x_fiber_x_pos: float, optional
-        :param y_fiber_y_pos: The y position that y fibers have, defaults to 60.0
-        :type y_fiber_y_pos: float, optional
-        :param z_fiber_z_pos: The z position that z fibers have, defaults to 910.0
-        :type z_fiber_z_pos: float, optional
         """
-
-        ## The positions that define fibers in each direction
-        self.x_fiber_x_pos: float = x_fiber_x_pos
-        self.y_fiber_y_pos: float = y_fiber_y_pos
-        self.z_fiber_z_pos: float = z_fiber_z_pos
 
         self.requirements = ["raw_positions", "raw_weights", "raw_times"]
         self.outputs = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+    def _setup_cli_options(self, parser):
+
+        parser.add_argument(
+            "--x-fiber-x-pos", 
+            help="The x position that x fibers have", 
+            required = False, default = 0.0, type = float,
+        )
+        parser.add_argument(
+            "--y-fiber-y-pos", 
+            help="The y position that y fibers have", 
+            required = False, default = 30.0, type = float,
+        )
+        parser.add_argument(
+            "--z-fiber-z-pos", 
+            help="The z position that z fibers have", 
+            required = False, default = 910.0, type = float,
+        )
+
+    def _initialise(self):
+        
+        ## TODO: use some geometry manager class to handle this sort of thing
+        ## The positions that define fibers in each direction
+        self.x_fiber_x_pos: float = self.args.x_fiber_x_pos
+        self.y_fiber_y_pos: float = self.args.y_fiber_y_pos
+        self.z_fiber_z_pos: float = self.args.z_fiber_z_pos
 
     def _process(self, event: Event) -> None:
 
@@ -116,38 +130,48 @@ class HitBuilder3D(ModuleBase):
     """Makes 3D hits from 2d fiber hits
     """
 
-    def __init__(
-            self,
-            require_3_fibers:bool = True,
-            pitch:typing.Tuple[float] = (10.0, 10.0, 10.0),
-            min_2d_hit_weight:float = 0.0,
-            n_required_peaks:int = None,
-            max_weighted_distance: float = None
-        ) -> None:
+    def __init__(self) -> None:
         """Initialise the module
-
-        :param require_3_fibers: Whether to require 3 fibers to form a hit or allow only on x and one y fiber, defaults to True
-        :type require_3_fibers: bool, optional
-        :param pitch: The distance between fibers in each direction, defaults to (10.0, 10.0, 10.0)
-        :type pitch: typing.Tuple[float], optional
-        :param min_2d_hit_weight: The minimum weight a 2D fiber hit must have to be considered when building 3D hits, defaults to 0.0
-        :type min_2d_hit_weight: float, optional
-        :param n_required_peaks: The number of "peak hits" required in each direction to form a valid 3D hit (see :func:`Hit3D.from_fiber_hits` for more details), defaults to None
-        :type n_required_peaks: int, optional
-        :param max_weighed_distance: The maximum "real" i.e. peak weighted discance between 2D hits in order for them to be considered for combining into a 3D hit. Specified as a fraction of fiber pitch, defaults to None
-        :type max_weighted_distance: float, optional
-        :return: list of 3d hits
-        :rtype: typing.List[Hit]
         """
-
-        self.require_3_fibers: bool = require_3_fibers
-        self.pitch: typing.Tuple[float] = pitch
-        self.min_2d_hit_weight: float = min_2d_hit_weight
-        self.n_required_peaks: int = n_required_peaks
-        self.max_weighted_distance: float = max_weighted_distance
 
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = ["3d_hits"]
+
+    def _setup_cli_options(self, parser):
+        
+        parser.add_argument(
+            "--require-3-fibers", 
+            help="Whether to require 3 fibers to form a hit or allow only on x and one y fiber", 
+            required = False, default = True, type = bool
+        )
+        parser.add_argument(
+            "--pitch", 
+            help="The distance between fibers in each direction", 
+            required = False, default = (10, 10, 10), nargs=3
+        )
+        parser.add_argument(
+            "--min-2d-hit-weight", 
+            help="The minimum weight a 2D fiber hit must have to be considered when building 3D hits", 
+            required = False, default = 0.0, type = float
+        )
+        parser.add_argument(
+            "--n-required-peaks", 
+            help="The number of 'peak hits' required in each direction to form a valid 3D hit (see :func:`Hit3D.from_fiber_hits` for more details)", 
+            required = False, default = None, type = int
+        )
+        parser.add_argument(
+            "--max-weighted-distance", 
+            help="The maximum 'real' i.e. peak weighted discance between 2D hits in order for them to be considered for combining into a 3D hit. Specified as a fraction of fiber pitch", 
+            required = False, default = None, type = float
+        )
+
+    def _initialise(self):
+        
+        self.require_3_fibers: bool = self.args.require_3_fibers
+        self.pitch: typing.Tuple[float] = self.args.pitch
+        self.min_2d_hit_weight: float = self.args.min_2d_hit_weight
+        self.n_required_peaks: int = self.args.n_required_peaks
+        self.max_weighted_distance: float = self.args.max_weighted_distance
 
     def _process(self, event: Event) -> None:
         
