@@ -45,7 +45,7 @@ class HoughTransform(ModuleBase):
         )
         parser.add_argument(
             "--make-gifs", 
-            help="Maximum charge for plots", 
+            help="Whether to make animated gifs of events (slooow)", 
             required = False, default = False, type = bool,
         )
         
