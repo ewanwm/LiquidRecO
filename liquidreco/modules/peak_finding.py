@@ -865,7 +865,72 @@ class HesseRidgeDetection2D(ModuleBase):
             hvu = np.divide(hvu, hist, where = hist != 0.0)
 
         return huu, hvv, huv, hvu
+    
+    def _hess_eigen(self, hist: np.array) -> typing.Tuple[np.array]:
+        """Get the eigenvalues and vectors of the hessian matrix of an input image
 
+        :param hist: The input image
+        :type hist: np.array
+        :return: The Hessian eigenvalues and eigenvectors
+        :rtype: typing.Tuple[np.array]
+        """
+
+        huu, hvv, huv, hvu = self._hessian(hist)
+        
+        hess_eigenvals = np.ndarray((2, *huu.shape))
+        hess_eigenvecs = np.ndarray((2, 2, *huu.shape))
+        
+        for dim0 in range(0, huu.shape[-2]):
+            for dim1 in range(0, huu.shape[-1]):
+
+                if(hist[dim0, dim1] == 0.0):
+                    hess_eigenvals[:, dim0, dim1] = 0.0
+                    hess_eigenvecs[:, :, dim0, dim1] = 0.0
+                
+                else:
+                    evals, evecs = eig(
+                        np.array(
+                            [
+                                [huu[dim0, dim1], hvu[dim0, dim1]],
+                                [huv[dim0, dim1], hvv[dim0, dim1]]
+                            ]
+                        )
+                    )
+
+                    if (np.any(np.imag(evals) != 0.0)):
+                        print(f"WARNING: complex eigenvalues found in Hessian!!!")
+
+                    hess_eigenvals[:, dim0, dim1] = np.real(evals[:])
+                    hess_eigenvecs[:, :, dim0, dim1] = np.real(evecs[:, :])
+
+        return hess_eigenvals, hess_eigenvecs
+
+    def _compute_ridgeness(self, hist: np.array, hess_eigenvals: np.array) -> np.array:
+        """Compute the "ridgeness" score for each pixel in an input image
+
+        :param hist: The 2D input image
+        :type hist: np.array
+        :param hess_eigenvals: The eigenvalues of the hessian for the image (computed using the `_hess_eigen()` method)
+        :type hess_eigenvals: np.array
+        :return: The 2D array of ridgeness scores
+        :rtype: np.array
+        """
+
+        ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
+        for dim0 in range(0, hess_eigenvals.shape[-2]):
+            for dim1 in range(0, hess_eigenvals.shape[-1]):
+
+                if (
+                    hist[dim0, dim1] > self._min_charge and
+                    np.all(hess_eigenvals[:, dim0, dim1] < self._max_pos_curvature) and
+                    -np.min(hess_eigenvals[:, dim0, dim1]) > self._min_negative_curvature
+                ):
+                    
+                    ridgeness[dim0, dim1, 0] = -np.min(hess_eigenvals[:, dim0, dim1])
+
+        return ridgeness
+
+        
     def _process(self, event:Event):
         """ Perform Hough transform on an event and save the result to a given file
 
@@ -898,56 +963,18 @@ class HesseRidgeDetection2D(ModuleBase):
                 bins = (u_bins, v_bins), weights=[hit.weight for hit in fiber_hits]
             )
             
-            ## Hessian eigenvalues
-            huu, hvv, huv, hvu = self._hessian(hist)
-            
-            hess_eigenvals = np.ndarray((2, *huu.shape))
-            hess_eigenvecs = np.ndarray((2, 2, *huu.shape))
-            
-            for dim0 in range(0, huu.shape[-2]):
-                for dim1 in range(0, huu.shape[-1]):
+            ## get eigenvalues and eigenvectors of Hessian
+            hess_eigenvals, hess_eigenvecs = self._hess_eigen(hist)
 
-                    if(hist[dim0, dim1] == 0.0):
-                        hess_eigenvals[:, dim0, dim1] = 0.0
-                        hess_eigenvecs[:, :, dim0, dim1] = 0.0
-                    
-                    else:
-                        evals, evecs = eig(
-                            np.array(
-                                [
-                                    [huu[dim0, dim1], hvu[dim0, dim1]],
-                                    [huv[dim0, dim1], hvv[dim0, dim1]]
-                                ]
-                            )
-                        )
-
-                        if (np.any(np.imag(evals) != 0.0)):
-                            print(f"WARNING: complex eigenvalues found in Hessian!!!")
-
-                        hess_eigenvals[:, dim0, dim1] = np.real(evals[:])
-                        hess_eigenvecs[:, :, dim0, dim1] = np.real(evecs[:, :])
-
-            ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
-            for dim0 in range(0, hess_eigenvals.shape[-2]):
-                for dim1 in range(0, hess_eigenvals.shape[-1]):
-
-                    if (
-                        hist[dim0, dim1] > self._min_charge and
-                        np.all(hess_eigenvals[:, dim0, dim1] < self._max_pos_curvature) and
-                        -np.min(hess_eigenvals[:, dim0, dim1]) > self._min_negative_curvature
-                    ):
-                        
-                        ridgeness[dim0, dim1, 0] = -np.min(hess_eigenvals[:, dim0, dim1])
-
+            ## compute the ridgeness score
+            ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
 
             if self._debug_pdf is not None:
                 self._make_debug_plots(
                     hist,
-                    huu, huv, hvu, hvv,
-                    u_name, v_name,
-                    ridgeness
+                    u_name, v_name
                 )
-
+                
             if self._pdf is not None:
                 self._make_plot(
                     ridgeness,
@@ -980,7 +1007,7 @@ class HesseRidgeDetection2D(ModuleBase):
         :type hess_eigenvals: np.array
         :param hess_eigenvecs: The 3D array of the eigenvectors of the hessian at each pixel
         :type hess_eigenvecs: np.array
-        :param v_name: The label of the u direction ("x", "y" or "z")
+        :param u_name: The label of the u direction ("x", "y" or "z")
         :type u_name: str
         :param v_name: The label of the v direction ("x", "y" or "z")
         :type v_name: str
@@ -1016,14 +1043,21 @@ class HesseRidgeDetection2D(ModuleBase):
 
     def _make_debug_plots(
         self,
-        hist,
-        huu, huv, hvu, hvv,
-        u_name, v_name,
-        ridgeness
+        hist: np.array,
+        u_name: str, v_name: str
     ):
-        """Make detailed plots of values used in the Hesse ridge detection algorithm
+        """
+        Make detailed plots of values used in the Hesse ridge detection algorithm
+        
+        :param hist: The input image
+        :type hist: np.array
+        :param u_name: The label of the u direction ("x", "y" or "z")
+        :type u_name: str
+        :param v_name: The label of the v direction ("x", "y" or "z")
+        :type v_name: str
         """
 
+        huu, hvv, huv, hvu = self._hessian(hist)
         fig, ax = plt.subplots(1, 8, figsize=(50, 10))
         ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
         ax[0].set_title("Original Event")
@@ -1043,6 +1077,8 @@ class HesseRidgeDetection2D(ModuleBase):
         ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
         ax[6].set_title(f"D_{v_name}")
 
+        hess_eigenvals, _ = self._hess_eigen(hist)
+        ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
         ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
         ax[7].set_title("Hessian Filter")
 
