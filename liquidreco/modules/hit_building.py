@@ -17,6 +17,8 @@ class HitBuilder2D(ModuleBase):
         """Initialise the module
         """
 
+        super().__init__()
+
         self.requirements = ["raw_positions", "raw_weights", "raw_times"]
         self.outputs = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
 
@@ -133,6 +135,8 @@ class HitBuilder3D(ModuleBase):
     def __init__(self) -> None:
         """Initialise the module
         """
+
+        super().__init__()
 
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = ["3d_hits"]

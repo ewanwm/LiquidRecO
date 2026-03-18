@@ -7,6 +7,8 @@ from liquidreco.event import Event
 
 class HitPlotter2D(ModuleBase):
     def __init__(self):
+
+        super().__init__()
           
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = []
@@ -58,6 +60,8 @@ class HitPlotter2D(ModuleBase):
 class HitPlotter3D(ModuleBase):
 
     def __init__(self):
+
+        super().__init__()
 
         self.requirements = ["3d_hits", "id"]
         self.outputs = []

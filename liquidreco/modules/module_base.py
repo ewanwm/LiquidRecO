@@ -137,23 +137,38 @@ class ModuleBase(ABC):
         self._setup_cli_options(parser)
         self._arg_parser = parser
 
-    def parse_args(self, args: typing.List[str]) -> typing.Union[Namespace, typing.Dict[str, typing.Any]]:
+    def parse_args(self, args: typing.List[str]) -> None:
         """Parse arguments for this module passed in from the command line
 
-        This sets the internally used _args variable which lets user code access config
+        This sets the internally used args variable which lets user code access config
         arguments, so this should be called before the module is called on any events.
 
         :param args: List of arguments as strings
         :type args: typing.List[str]
         :raises ValueError: if the arg parser has not yet been set up for this module
-        :return: The parsed arguments
-        :rtype: typing.Union[Namespace, typing.Dict[str, typing.Any]]
         """
 
         if self._arg_parser is None:
             raise ValueError("arg parser not set!!! did you forget to call setup_parser()???")
         
         self.args = self._arg_parser.parse_args(args)
+
+    def parse_object(self, cfg_object: typing.Dict[str, typing.Any]) -> None:
+        """Parse arguments for this module passed in as a dict
+
+        Use for parsing objects specified via json config.
+        This sets the internally used args variable which lets user code access config
+        arguments, so this should be called before the module is called on any events.
+
+        :param cfg_object: Dict containing arguments
+        :type cfg_object: typing.Dict[str, typing.Any]
+        :raises ValueError: if the arg parser has not yet been set up for this module
+        """
+
+        if self._arg_parser is None:
+            raise ValueError("arg parser not set!!! did you forget to call setup_parser()???")
+        
+        self.args = self._arg_parser.parse_object(cfg_object)
         
         return self.args
 

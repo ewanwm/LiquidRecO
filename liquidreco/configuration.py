@@ -166,9 +166,41 @@ class Configuration:
 
 
     def _parse_json_config(self, config_file: str) -> None:
+        """Parse a json config file
 
-        ## TODO
-        raise NotImplementedError()
+        This will overwrite the `args` member variable, effectively ignoring any
+        previously specified module settings
+
+        :param config_file: The file to read the config from
+        :type config_file: str
+        """
+
+        ## reset the module list in case user accidentally specified any modules in cmd line
+        self.modules = []
+
+        json_config = None
+
+        with open(config_file, "r") as file:
+            
+            json_config = json.load(file)
+
+        assert "modules" in json_config.keys(), "Did not find 'modules' key in config file!! Is this really a liquidreco config file????"
+
+        ## get the dict defining the config for each module and parse it 
+        for module_json in json_config["modules"]:
+
+            module_name = module_json["module"]
+            module_config_dict = module_json["config"]
+
+            module_inst = ModuleList().get_module(module_name)()
+
+            arg_parser = ArgumentParser(module_name, description = module_inst.help(), formatter_class=RawTextHelpFormatter)
+            module_inst.setup_parser(arg_parser)
+
+            module_inst.parse_object(module_config_dict)
+
+            self.modules.append(module_inst)
+
     
     def to_json(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
         """Dump the module configuration to a json string
