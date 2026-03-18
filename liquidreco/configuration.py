@@ -3,11 +3,18 @@ import typing
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.module_list import ModuleList
 
-from jsonargparse import ArgumentParser, ActionConfigFile, dict_to_namespace, namespace_to_dict
+from jsonargparse import ArgumentParser, Namespace, ActionConfigFile, dict_to_namespace, namespace_to_dict
 
 from argparse import RawTextHelpFormatter
 
 class Configuration:
+    """Class responsible for parsing user configuration
+
+    The parse_args() method is used to parse command line arguments like
+    parse_args(sys.argv[1:]). Then specified modules are available in the 
+    `modules` attribute and base config arguments like input file, output
+    file etc. are available in the `base_args` attribute.
+    """
 
     def __init__(self):
         
@@ -22,6 +29,9 @@ class Configuration:
 
         ## the instances of the modules to run
         self.modules: typing.List[ModuleBase] = []
+
+        ## The "base" arguments 
+        self.base_args: Namespace = None
 
     def _setup_base_parser(self) -> None:
         """Set up the base argument parser - the one that deals with everything that isn't
@@ -104,10 +114,12 @@ class Configuration:
 
     def _parse_json_config(self, config_file: str) -> None:
 
+        ## TODO
         raise NotImplementedError()
     
     def _dump_to_json(self, file_name: str) -> None:
 
+        ## TODO
         raise NotImplementedError()
 
 
