@@ -277,6 +277,7 @@ neighbourhood.
         
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = [
+            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits",
             "x_peak_hits", "y_peak_hits", "z_peak_hits",
             "unused_x_hits", "unused_y_hits", "unused_z_hits",
             "laplace_x_peaks", "laplace_y_peaks", "laplace_z_peaks"
@@ -450,9 +451,9 @@ neighbourhood.
             plt.close(fig)
 
 
-        event.add_data("x_peak_hits", x_fiber_hits)
-        event.add_data("y_peak_hits", y_fiber_hits)
-        event.add_data("z_peak_hits", z_fiber_hits)
+        event.add_data("x_peak_hits", x_peak_hits)
+        event.add_data("y_peak_hits", y_peak_hits)
+        event.add_data("z_peak_hits", z_peak_hits)
         
         event.add_data("unused_x_hits", x_unused)
         event.add_data("unused_y_hits", y_unused)
@@ -461,6 +462,10 @@ neighbourhood.
         event.add_data("laplace_x_peaks", laplace_x_peak_hits)
         event.add_data("laplace_y_peaks", laplace_y_peak_hits)
         event.add_data("laplace_z_peaks", laplace_z_peak_hits)
+
+        event.add_data("x_fiber_hits", x_peak_hits)
+        event.add_data("y_fiber_hits", y_peak_hits)
+        event.add_data("z_fiber_hits", z_peak_hits)
 
         return
             
@@ -759,6 +764,11 @@ class HesseRidgeDetection2D(ModuleBase):
         super().__init__()
 
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+        self.outputs = [
+            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits",
+            "x_peak_hits", "y_peak_hits", "z_peak_hits",
+            "unused_x_hits", "unused_y_hits", "unused_z_hits"
+        ]
 
     def _initialise(self) -> None:
         
@@ -787,12 +797,12 @@ class HesseRidgeDetection2D(ModuleBase):
         parser.add_argument(
             "--min-charge", 
             help="The minimum charge that a hit must have to be considered a peak hit", 
-            required = False, default = 20.0, type = float,
+            required = False, default = 80.0, type = float,
         )
         parser.add_argument(
             "--max-positive-curvature", 
             help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
-            required = False, default = 20.0, type = float,
+            required = False, default = 50.0, type = float,
         )
         parser.add_argument(
             "--min-negative-curvature", 
@@ -942,14 +952,32 @@ class HesseRidgeDetection2D(ModuleBase):
         y_fiber_hits = event["y_fiber_hits"]
         z_fiber_hits = event["z_fiber_hits"]
 
-        for fiber_hits, u_name, v_name in zip(
+        x_peak_hits = list()
+        y_peak_hits = list()
+        z_peak_hits = list()
+
+        x_unused = set()
+        y_unused = set()
+        z_unused = set()
+
+        for fiber_hits, u_name, v_name, peak_hits, unused_hits in zip(
             [
                 x_fiber_hits, 
                 y_fiber_hits, 
                 z_fiber_hits
             ],
             ["y", "x", "x"],
-            ["z", "z", "y"]
+            ["z", "z", "y"],
+            [
+                x_peak_hits,
+                y_peak_hits,
+                z_peak_hits
+            ],
+            [
+                x_unused,
+                y_unused,
+                z_unused
+            ]
         ):
             
             u_values = [getattr(hit, u_name) for hit in fiber_hits]
@@ -982,6 +1010,37 @@ class HesseRidgeDetection2D(ModuleBase):
                     hess_eigenvecs,
                     u_name, v_name
                 )
+
+            ## now make the peak hits
+            ## loop over the fiber hits, check if the "pixel" it falls into is a ridge, if so save it as a peak hit
+            for hit in fiber_hits:
+
+                u = getattr(hit, u_name)
+                v = getattr(hit, v_name)
+
+                u_bin = np.digitize(u, u_bins)
+                v_bin = np.digitize(v, v_bins)
+
+                ## have already applied all our conditions when calculating ridgeness and don't fill it if it fails
+                ## so here we just need to check if it's not 0
+                if ridgeness[u_bin -1, v_bin -1] > 0.0:
+                    peak_hits.append(hit)
+
+                else:
+                    unused_hits.add(hit)
+
+
+        event.add_data("x_fiber_hits", x_peak_hits)
+        event.add_data("y_fiber_hits", y_peak_hits)
+        event.add_data("z_fiber_hits", z_peak_hits)
+
+        event.add_data("x_peak_hits", x_peak_hits)
+        event.add_data("y_peak_hits", y_peak_hits)
+        event.add_data("z_peak_hits", z_peak_hits)
+        
+        event.add_data("unused_x_hits", x_unused)
+        event.add_data("unused_y_hits", y_unused)
+        event.add_data("unused_z_hits", z_unused)
         
     def _finalise(self):
 
