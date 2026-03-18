@@ -21,10 +21,10 @@ def main():
 
     ## create the processor
     processor = EventProcessor(
-        file_name = config.base_args.input_file,
-        tree_name = config.base_args.input_tree_name,
+        file_name = config.fit_args.input_file,
+        tree_name = config.fit_args.input_tree_name,
         modules = config.modules,
-        max_n_events = config.base_args.n_events
+        max_n_events = config.fit_args.n_events
     )
 
     ## run!!!!!
