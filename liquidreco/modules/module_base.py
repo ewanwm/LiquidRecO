@@ -71,11 +71,13 @@ class ModuleBase(ABC):
     def _help(self) -> str:
         """Should return a help string that will be printed to the command line for this module
 
+        Default behaviour is to use the class docstring of the module
+
         :return: helpful message about your module
         :rtype: str
         """
 
-        return ""
+        return self.__class__.__doc__
 
     def _check_requirements(self, event: Event) ->None:
         """Checks that the event has all the required inputs for this module
