@@ -27,6 +27,7 @@
         "scikit-learn",
         "linscan@git+https://github.com/ewanwm/linscan.git",
         "hough3d@git+https://github.com/ewanwm/hough3d.git",
+        "jsonargparse"
     ]
 
 [build-system]
