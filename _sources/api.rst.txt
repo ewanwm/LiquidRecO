@@ -7,16 +7,55 @@ Hits
    .. automodule:: liquidreco.hit
       :members:
 
-============
-Peak_finding
-============
-   .. automodule:: liquidreco.peak_finding
+======
+Events
+======
+   .. automodule:: liquidreco.event
       :members:
 
-==============
+=======
+Modules
+=======
+
+Accessing Modules
+-----------------
+   .. automodule:: liquidreco.modules.module_list
+      :members:
+
+Base Modules
+------------
+   .. automodule:: liquidreco.modules.module_base
+      :members:
+
+Hit Building
+------------
+   .. automodule:: liquidreco.modules.hit_building
+      :members:
+
+Peak Finding
+------------
+   .. automodule:: liquidreco.modules.peak_finding
+      :members:
+
 Reconstruction
-==============
-   .. automodule:: liquidreco.reconstruction
+--------------
+   .. automodule:: liquidreco.modules.reconstruction
+      :members:
+
+Utility
+-------
+   .. automodule:: liquidreco.modules.utility
+      :members:
+
+Plotting
+--------
+   .. automodule:: liquidreco.modules.hit_building
+      :members:
+
+=============
+Configuration
+=============
+   .. automodule:: liquidreco.configuration
       :members:
 
 ===============

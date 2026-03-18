@@ -71,8 +71,55 @@
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.local_normalisation"><code class="docutils literal notranslate"><span class="pre">local_normalisation()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#peak-finding">Peak_finding</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reconstruction">Reconstruction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#events">Events</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#liquidreco.event.Event"><code class="docutils literal notranslate"><span class="pre">Event</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.event.Event.add_data"><code class="docutils literal notranslate"><span class="pre">Event.add_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.event.Event.get_keys"><code class="docutils literal notranslate"><span class="pre">Event.get_keys()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#modules">Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#accessing-modules">Accessing Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base-modules">Base Modules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.module_base.ModuleBase"><code class="docutils literal notranslate"><span class="pre">ModuleBase</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#hit-building">Hit Building</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.hit_building.HitBuilder2D"><code class="docutils literal notranslate"><span class="pre">HitBuilder2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.hit_building.HitBuilder3D"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#peak-finding">Peak Finding</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D"><code class="docutils literal notranslate"><span class="pre">HesseRidgeDetection2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.LaplaceFitter"><code class="docutils literal notranslate"><span class="pre">LaplaceFitter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.PeakFinder2D"><code class="docutils literal notranslate"><span class="pre">PeakFinder2D</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reconstruction">Reconstruction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.HoughTransform"><code class="docutils literal notranslate"><span class="pre">HoughTransform</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN"><code class="docutils literal notranslate"><span class="pre">LocalMeanDBSCAN</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#utility">Utility</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.utility.WeightScaling"><code class="docutils literal notranslate"><span class="pre">WeightScaling</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#plotting">Plotting</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">HitBuilder2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#liquidreco.configuration.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.parse_args"><code class="docutils literal notranslate"><span class="pre">Configuration.parse_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.to_json"><code class="docutils literal notranslate"><span class="pre">Configuration.to_json()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#event-processor">Event Processor</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor"><code class="docutils literal notranslate"><span class="pre">EventProcessor</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor.event_loop"><code class="docutils literal notranslate"><span class="pre">EventProcessor.event_loop()</span></code></a></li>
@@ -80,7 +127,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">Plotting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
 </ul>
@@ -253,18 +300,297 @@ and hits in the neighbourhood have their charges normalised by this value</p>
 
 </div></blockquote>
 </section>
+<section id="events">
+<h2>Events<a class="headerlink" href="#events" title="Link to this heading"></a></h2>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.event">
+<dt class="sig sig-object py" id="liquidreco.event.Event">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.event.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><a class="headerlink" href="#liquidreco.event.Event" title="Link to this definition"></a></dt>
+<dd><p>Holds event data, is read from and written to by the various modules</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.event.Event.add_data">
+<span class="sig-name descname"><span class="pre">add_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.event.Event.add_data" title="Link to this definition"></a></dt>
+<dd><p>Add some information about the event to the internal data table.</p>
+<p>Can be whatever you want, hit positions, total energy deposited, a nickname for the event, go crazy!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – A key for the data being added, used by modules to access the data</p></li>
+<li><p><strong>data</strong> (<em>Any</em>) – The actual data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.event.Event.get_keys">
+<span class="sig-name descname"><span class="pre">get_keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.event.Event.get_keys" title="Link to this definition"></a></dt>
+<dd><p>Get all the data containers that are currently available in this event</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of all the keys in the internal data table</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
+</section>
+<section id="modules">
+<h2>Modules<a class="headerlink" href="#modules" title="Link to this heading"></a></h2>
+<section id="accessing-modules">
+<h3>Accessing Modules<a class="headerlink" href="#accessing-modules" title="Link to this heading"></a></h3>
+<blockquote>
+<div></div></blockquote>
+</section>
+<section id="base-modules">
+<span id="module-liquidreco.modules.module_list"></span><h3>Base Modules<a class="headerlink" href="#base-modules" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.modules.module_base">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.module_base.</span></span><span class="sig-name descname"><span class="pre">ModuleBase</span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase" title="Link to this definition"></a></dt>
+<dd><p>Base class of modules that can be run over events.</p>
+<p>Any requirements should be given by name in the <cite>requirements</cite> member variable.
+Any outputs should be given by name in the <cite>outputs</cite> member variable.</p>
+<section id="to-be-overrridden">
+<h4>To be overrridden<a class="headerlink" href="#to-be-overrridden" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p>_process() - REQUIRED</p></li>
+<li><p>_initialise() - OPTIONAL</p></li>
+<li><p>_finalise() - OPTIONAL</p></li>
+<li><p>_setup_cli_options() - OPTIONAL</p></li>
+<li><p>_help() - OPTIONAL</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.finalise">
+<span class="sig-name descname"><span class="pre">finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.finalise" title="Link to this definition"></a></dt>
+<dd><p>Tear down the module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.help">
+<span class="sig-name descname"><span class="pre">help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.help" title="Link to this definition"></a></dt>
+<dd><p>Get help message for cmd line for this module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>help string</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.initialise">
+<span class="sig-name descname"><span class="pre">initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up the module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.parse_args">
+<span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.parse_args" title="Link to this definition"></a></dt>
+<dd><p>Parse arguments for this module passed in from the command line</p>
+<p>This sets the internally used args variable which lets user code access config
+arguments, so this should be called before the module is called on any events.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of arguments as strings</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the arg parser has not yet been set up for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.parse_object">
+<span class="sig-name descname"><span class="pre">parse_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg_object</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.parse_object" title="Link to this definition"></a></dt>
+<dd><p>Parse arguments for this module passed in as a dict</p>
+<p>Use for parsing objects specified via json config.
+This sets the internally used args variable which lets user code access config
+arguments, so this should be called before the module is called on any events.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg_object</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dict containing arguments</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the arg parser has not yet been set up for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.process" title="Link to this definition"></a></dt>
+<dd><p>Process a single event</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the given event does not contain the specified pre-requisite inputs to at the start, or the promised outputs at the end</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.setup_parser">
+<span class="sig-name descname"><span class="pre">setup_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArgumentParser</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.setup_parser" title="Link to this definition"></a></dt>
+<dd><p>Setup argument parser for this module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The parser to be set up</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</div></blockquote>
+</section>
+<section id="hit-building">
+<h3>Hit Building<a class="headerlink" href="#hit-building" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.modules.hit_building">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder2D</span></span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder2D" title="Link to this definition"></a></dt>
+<dd><p>Absolute base level module to build 2D hits from raw hit information</p>
+<p>The starting point for any good reconstruction chain.
+Takes in raw hit info and turns it into more structiured hits.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder3D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder3D" title="Link to this definition"></a></dt>
+<dd><p>Makes 3D hits from 2d fiber hits</p>
+</dd></dl>
+
+</div></blockquote>
+</section>
 <section id="peak-finding">
-<h2>Peak_finding<a class="headerlink" href="#peak-finding" title="Link to this heading"></a></h2>
+<h3>Peak Finding<a class="headerlink" href="#peak-finding" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.modules.peak_finding">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection2D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D" title="Link to this definition"></a></dt>
+<dd><p>Performs simple Hough line transform</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.LaplaceFitter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">LaplaceFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighbourhood_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">45.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_candidate_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_n_neighbours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.LaplaceFitter" title="Link to this definition"></a></dt>
+<dd><p>Performs a fit of an ensemble of laplace distributions to observed collected charges in fibers in order to try to determine which</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">PeakFinder2D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D" title="Link to this definition"></a></dt>
+<dd><p>Finds peaks in raw fiber hits and performs position corrections</p>
+</dd></dl>
+
+</div></blockquote>
 </section>
 <section id="reconstruction">
-<h2>Reconstruction<a class="headerlink" href="#reconstruction" title="Link to this heading"></a></h2>
+<h3>Reconstruction<a class="headerlink" href="#reconstruction" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p id="module-liquidreco.modules.reconstruction">Module to be used to reconstruct tracks from hits.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform</span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform" title="Link to this definition"></a></dt>
+<dd><p>Performs simple Hough line transform</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.LocalMeanDBSCAN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">LocalMeanDBSCAN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_ball_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbscan_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_charge_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</div></blockquote>
+</section>
+<section id="utility">
+<h3>Utility<a class="headerlink" href="#utility" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.modules.utility">
+<dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.utility.</span></span><span class="sig-name descname"><span class="pre">WeightScaling</span></span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</div></blockquote>
+</section>
+<section id="plotting">
+<h3>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="py class" id="module-0">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder2D</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd><p>Absolute base level module to build 2D hits from raw hit information</p>
+<p>The starting point for any good reconstruction chain.
+Takes in raw hit info and turns it into more structiured hits.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd><p>Makes 3D hits from 2d fiber hits</p>
+</dd></dl>
+
+</div></blockquote>
+</section>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
+<blockquote>
+<div><dl class="py class" id="module-liquidreco.configuration">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.configuration.</span></span><span class="sig-name descname"><span class="pre">Configuration</span></span><a class="headerlink" href="#liquidreco.configuration.Configuration" title="Link to this definition"></a></dt>
+<dd><p>Class responsible for parsing user configuration</p>
+<p>The parse_args() method is used to parse command line arguments like
+parse_args(sys.argv[1:]). Then specified modules are available in the 
+<cite>modules</cite> attribute and base config arguments like input file, output
+file etc. are available in the <cite>base_args</cite> attribute.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration.parse_args">
+<span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration.parse_args" title="Link to this definition"></a></dt>
+<dd><p>Parse list of arguments</p>
+<p>You probably want to pass in sys.argv[1:] - this will get you the command line 
+arguments specified by a user</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The list of arguments to be parsed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration.to_json" title="Link to this definition"></a></dt>
+<dd><p>Dump the module configuration to a json string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>JSON formatted string containing configuration for all specified modules</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
 </section>
 <section id="event-processor">
 <h2>Event Processor<a class="headerlink" href="#event-processor" title="Link to this heading"></a></h2>
 <blockquote>
 <div><dl class="py class" id="module-liquidreco.event_processor">
 <dt class="sig sig-object py" id="liquidreco.event_processor.EventProcessor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.event_processor.</span></span><span class="sig-name descname"><span class="pre">EventProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ModuleBase</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.event_processor.</span></span><span class="sig-name descname"><span class="pre">EventProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.modules.module_base.ModuleBase" title="liquidreco.modules.module_base.ModuleBase"><span class="pre">ModuleBase</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor" title="Link to this definition"></a></dt>
 <dd><p>Main application loop for liquidreco</p>
 <p>This is responsible for loading up events from the input file and
 looping over them, applying fit modules specified by the user.</p>
@@ -278,8 +604,8 @@ looping over them, applying fit modules specified by the user.</p>
 
 </div></blockquote>
 </section>
-<section id="plotting">
-<h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
+<section id="id2">
+<h2>Plotting<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
 <blockquote>
 <div></div></blockquote>
 </section>
