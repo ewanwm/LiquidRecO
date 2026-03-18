@@ -13,6 +13,7 @@ from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from scipy.linalg import eig
 
 import typing
+import json
 
 from liquidreco.hit import Hit, Hit2D, Hit3D
 from liquidreco.modules.module_base import ModuleBase
@@ -763,6 +764,10 @@ class HesseRidgeDetection2D(ModuleBase):
         
         self._pitch = self.args.pitch
 
+        self._min_charge = self.args.min_charge
+        self._max_pos_curvature = self.args.max_positive_curvature
+        self._min_negative_curvature = self.args.min_negative_curvature
+
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-event-examples.pdf")
         self._hesse_reco_pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-reconstructed-event-examples.pdf")
 
@@ -771,8 +776,23 @@ class HesseRidgeDetection2D(ModuleBase):
         ## TODO: Make geometry manager class to store this kind of thing
         parser.add_argument(
             "--pitch", 
-            help="The fiber pitch.", 
+            help="The fiber pitch", 
             required = False, default = 10.0, type = float,
+        )
+        parser.add_argument(
+            "--min-charge", 
+            help="The minimum charge that a hit must have to be considered a peak hit", 
+            required = False, default = 20.0, type = float,
+        )
+        parser.add_argument(
+            "--max-positive-curvature", 
+            help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
+            required = False, default = 20.0, type = float,
+        )
+        parser.add_argument(
+            "--min-negative-curvature", 
+            help="The minimum negative or 'downwards' curvature that is required in the neighbourhood of a hit for it to be considered a peak. The closer this is to 0.0, the more shallow peaks are allowed, the higher it is, the sharper the peaks must be", 
+            required = False, default = 50.0, type = float,
         )
         
     def _gradient(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
@@ -886,12 +906,14 @@ class HesseRidgeDetection2D(ModuleBase):
             for dim0 in range(0, hess_eigenvals.shape[-2]):
                 for dim1 in range(0, hess_eigenvals.shape[-1]):
 
-                    if (np.any(hess_eigenvals[:, dim0, dim1] > 0.0)) or (np.all(hess_eigenvals[:, dim0, dim1] == 0.0)):
-                        pass
+                    if (
+                        hist[dim0, dim1] > self._min_charge and
+                        np.all(hess_eigenvals[:, dim0, dim1] < self._max_pos_curvature) and
+                        -np.min(hess_eigenvals[:, dim0, dim1]) > self._min_negative_curvature
+                    ):
+                        
+                        ridgeness[dim0, dim1, 0] = -np.min(hess_eigenvals[:, dim0, dim1])
 
-                    else:
-                        ridgeness[dim0, dim1, 0] = np.linalg.norm(hess_eigenvals[:, dim0, dim1])
-            
             fig, ax = plt.subplots(1, 8, figsize=(50, 10))
             ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
             ax[0].set_title("Original Event")
@@ -911,8 +933,6 @@ class HesseRidgeDetection2D(ModuleBase):
             ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
             ax[6].set_title(f"D_{v_name}")
 
-            #ridgeness = np.clip(-np.max(hess_eigenvals, axis=0), 0.0, 99999.9)
-            ridgeness /= np.max(ridgeness)
             ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
             ax[7].set_title("Hessian Filter")
 
