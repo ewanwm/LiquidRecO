@@ -268,23 +268,11 @@ directions (up, down, left right and each diagonal). It is the highest point in 
 neighbourhood.
 """
     
-    def __init__(
-            self,
-            DBSCAN_args = {"eps": 10.5},
-            laplace_fit_args = {},
-        ):
+    def __init__(self):
         """Initialiser
-
-        :param DBSCAN_args: arguments to pass to the DBSCAN algorithm used to build "blob" clusters, defaults to {"eps": 10.5}
-        :type DBSCAN_args: dict, optional
-        :param laplace_fit_args: parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs, defaults to {}
-        :type laplace_fit_args: dict, optional
         """
 
         super().__init__()
-
-        self.DBSCAN_args = DBSCAN_args
-        self.laplace_fit_args = laplace_fit_args
         
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = [
@@ -297,6 +285,9 @@ neighbourhood.
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-plots.pdf")
         self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
+
+        self.DBSCAN_args = json.loads(self.args.DBSCAN_args)
+        self.laplace_fit_args = json.loads(self.args.laplace_fit_args)
 
         self._clusterer = DBSCAN(**self.DBSCAN_args)
         self._laplace_fitter = LaplaceFitter(**self.laplace_fit_args, make_plots=self.args.make_plots)
@@ -328,18 +319,17 @@ neighbourhood.
             help="Whether to make debug plots.", 
             required = False, default = False, type = bool,
         )
-
-        ## TODO: Figure out how to pass dict into argparse!!!!
-        ## parser.add_argument(
-        ##     "--DBSCAN-args", 
-        ##     help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
-        ##     required = False, default = "{\"eps\": 10.5}",
-        ## )
-        ## parser.add_argument(
-        ##     "--laplace_fit_args", 
-        ##     help="parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs", 
-        ##     required = False, default = "{}",
-        ## )
+        ## Note these are passed as a string but will later be converted to dictionaries
+        parser.add_argument(
+            "--DBSCAN-args", 
+            help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
+            required = False, default = "{\"eps\": 10.5}", type = str
+        )
+        parser.add_argument(
+            "--laplace_fit_args", 
+            help="parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs", 
+            required = False, default = "{}", type = str
+        )
         
     def _finalise(self):
         """Tidy up and close open pdfs
