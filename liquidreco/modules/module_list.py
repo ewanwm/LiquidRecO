@@ -1,7 +1,7 @@
 import typing
 
 from liquidreco.modules.module_base import ModuleBase
-from liquidreco.modules.peak_finding import HesseRidgeDetection2D, PeakFinder2D
+from liquidreco.modules.peak_finding import HesseRidgeDetection2D, HesseRidgeDetection3D, PeakFinder2D
 from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN
 from liquidreco.modules.hit_building import HitBuilder2D, HitBuilder3D
 from liquidreco.modules.utility import WeightScaling
@@ -82,6 +82,7 @@ ModuleList().register(HitBuilder3D)
 
 ## peak finding
 ModuleList().register(HesseRidgeDetection2D)
+ModuleList().register(HesseRidgeDetection3D)
 ModuleList().register(PeakFinder2D)
 
 ## reconstruction

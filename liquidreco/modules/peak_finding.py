@@ -1144,3 +1144,264 @@ class HesseRidgeDetection2D(ModuleBase):
         self._debug_pdf.savefig(fig)
         plt.close(fig)
         
+
+class HesseRidgeDetection3D(ModuleBase):
+    """ Performs simple Hough line transform
+    """
+
+    def __init__(
+            self
+        ):
+
+        super().__init__()
+
+        self.requirements = ["3d_hits"]
+        self.outputs = [
+            "3d_hits",
+            "3d_peak_hits",
+            "unused_3d_hits"
+        ]
+
+    def _initialise(self) -> None:
+        
+        self._pitch = self.args.pitch
+
+        self._min_charge = self.args.min_charge
+        self._max_pos_curvature = self.args.max_positive_curvature
+        self._min_negative_curvature = self.args.min_negative_curvature
+
+        self._debug_pdf = None
+        self._pdf = None
+
+        if self.args.make_debug_plots:
+            self._debug_pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.debug_plot_file_name)
+        if self.args.make_plots:
+            self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.plot_file_name)
+
+    def _setup_cli_options(self, parser):
+
+        ## TODO: Make geometry manager class to store this kind of thing
+        parser.add_argument(
+            "--pitch", 
+            help="The fiber pitch", 
+            required = False, default = 10.0, type = float,
+        )
+        parser.add_argument(
+            "--min-charge", 
+            help="The minimum charge that a hit must have to be considered a peak hit", 
+            required = False, default = 80.0, type = float,
+        )
+        parser.add_argument(
+            "--max-positive-curvature", 
+            help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
+            required = False, default = 50.0, type = float,
+        )
+        parser.add_argument(
+            "--min-negative-curvature", 
+            help="The minimum negative or 'downwards' curvature that is required in the neighbourhood of a hit for it to be considered a peak. The closer this is to 0.0, the more shallow peaks are allowed, the higher it is, the sharper the peaks must be", 
+            required = False, default = 40.0, type = float,
+        )
+        parser.add_argument(
+            "--make-plots", 
+            help="Whether to make basic plots", 
+            required = False, default = False, type = bool,
+        )
+        parser.add_argument(
+            "--plot-file-name", 
+            help="Name of file to save plots to if --make-plots option is true", 
+            required = False, default = "Hesse-example-plots.pdf", type = str,
+        )
+        parser.add_argument(
+            "--make-debug-plots", 
+            help="Whether to make debug plots", 
+            required = False, default = False, type = bool,
+        )
+        parser.add_argument(
+            "--debug-plot-file-name", 
+            help="Name of file to save debug plots to if --make-debug-plots option is true", 
+            required = False, default = "Hesse-debug-plots.pdf", type = str,
+        )
+        
+    def _gradient(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
+        """Calculate the gradient of an input image using central finite difference
+
+        :param hist: Histogram you want the gradient of
+        :type hist: np.array
+        :param normalise: Do per-bin normalisation to the cantral value
+        :type normalise: bool
+        :return: arrays du and dv containing derivatives wrt u and v
+        :rtype: Tuple[np.array]
+        """
+
+        assert len(hist.shape) == 3, f"Wrong number of dimensions, can only do 3D but got {len(hist.shape)}!"
+
+        u_grad = np.gradient(hist, axis = 0)
+        v_grad = np.gradient(hist, axis = 1)
+        w_grad = np.gradient(hist, axis = 2)
+        
+        if normalise:
+            u_grad = np.divide(u_grad, hist, where = hist != 0.0)
+            v_grad = np.divide(v_grad, hist, where = hist != 0.0)
+            w_grad = np.divide(w_grad, hist, where = hist != 0.0)
+
+        return u_grad, v_grad, w_grad
+    
+    def _hessian(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
+        """Calculate the hessian matrix of an input image using central finite difference
+
+        :param hist: Histogram you want the hessian of
+        :type hist: np.array
+        :param normalise: Do per-bin normalisation to the cantral value
+        :type normalise: bool
+        :return: arrays huu, hvv, huv, hvu containing each of the necessary double derivatives
+        :rtype: Tuple[np.array]
+        """
+
+        du, dv, dw = self._gradient(hist)
+
+        huu, huv, huw = self._gradient(du)
+        hvu, hvv, hvw = self._gradient(dv)
+        hwu, hwv, hww = self._gradient(dw)
+
+        if normalise:
+            huu = np.divide(huu, hist, where = hist != 0.0)
+            huv = np.divide(huv, hist, where = hist != 0.0)
+            huw = np.divide(huw, hist, where = hist != 0.0)
+            hvv = np.divide(hvv, hist, where = hist != 0.0)
+            hvu = np.divide(hvu, hist, where = hist != 0.0)
+            hvw = np.divide(hvw, hist, where = hist != 0.0)
+            hwv = np.divide(hwv, hist, where = hist != 0.0)
+            hwu = np.divide(hwu, hist, where = hist != 0.0)
+            hww = np.divide(hww, hist, where = hist != 0.0)
+
+        return huu, hvv, huw, huv, hvu, hvw, hwu, hwv, hww
+    
+    def _hess_eigen(self, hist: np.array) -> typing.Tuple[np.array]:
+        """Get the eigenvalues and vectors of the hessian matrix of an input image
+
+        :param hist: The input image
+        :type hist: np.array
+        :return: The Hessian eigenvalues and eigenvectors
+        :rtype: typing.Tuple[np.array]
+        """
+
+        huu, hvv, huw, huv, hvu, hvw, hwu, hwv, hww = self._hessian(hist)
+        
+        hess_eigenvals = np.ndarray((3, *huu.shape))
+        hess_eigenvecs = np.ndarray((3, 3, *huu.shape))
+        
+        for dim0 in range(0, huu.shape[-3]):
+            for dim1 in range(0, huu.shape[-2]):
+                for dim2 in range(0, huu.shape[-1]):
+
+                    if(hist[dim0, dim1, dim2] == 0.0):
+                        hess_eigenvals[:, dim0, dim1, dim2] = 0.0
+                        hess_eigenvecs[:, :, dim0, dim1, dim2] = 0.0
+                    
+                    else:
+                        evals, evecs = eig(
+                            np.array(
+                                [
+                                    [huu[dim0, dim1, dim2], hvu[dim0, dim1, dim2], hwu[dim0, dim1, dim2]],
+                                    [huv[dim0, dim1, dim2], hvv[dim0, dim1, dim2], hwv[dim0, dim1, dim2]],
+                                    [huw[dim0, dim1, dim2], hvw[dim0, dim1, dim2], hww[dim0, dim1, dim2]]
+                                ]
+                            )
+                        )
+
+                        if (np.any(np.imag(evals) != 0.0)):
+                            print(f"WARNING: complex eigenvalues found in Hessian!!!")
+
+                        hess_eigenvals[:, dim0, dim1, dim2] = np.real(evals[:])
+                        hess_eigenvecs[:, :, dim0, dim1, dim2] = np.real(evecs[:, :])
+
+        return hess_eigenvals, hess_eigenvecs
+
+    def _compute_ridgeness(self, hist: np.array, hess_eigenvals: np.array) -> np.array:
+        """Compute the "ridgeness" score for each pixel in an input image
+
+        :param hist: The 2D input image
+        :type hist: np.array
+        :param hess_eigenvals: The eigenvalues of the hessian for the image (computed using the `_hess_eigen()` method)
+        :type hess_eigenvals: np.array
+        :return: The 2D array of ridgeness scores
+        :rtype: np.array
+        """
+
+        ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
+        for dim0 in range(0, hess_eigenvals.shape[-3]):
+            for dim1 in range(0, hess_eigenvals.shape[-2]):
+                for dim2 in range(0, hess_eigenvals.shape[-1]):
+
+                    if (
+                        hist[dim0, dim1, dim2] > self._min_charge and
+                        np.all(hess_eigenvals[:, dim0, dim1, dim2] < self._max_pos_curvature) and
+                        (np.sum(-hess_eigenvals[:, dim0, dim1, dim2] > self._min_negative_curvature) >= 2)
+                    ):
+                        
+                        ridgeness[dim0, dim1, dim2, 0] = -np.min(hess_eigenvals[:, dim0, dim1, dim2])
+
+        return ridgeness
+        
+    def _process(self, event:Event):
+        """ Perform Hough transform on an event and save the result to a given file
+
+        :param event: Object describing the hits in an event
+        :type event: Event
+        """
+
+        hits = event["3d_hits"]
+        peak_hits = list()
+        unused = set()
+
+        
+        u_values = [hit.x for hit in hits]
+        v_values = [hit.y for hit in hits]
+        w_values = [hit.z for hit in hits]
+
+        u_bins = np.arange(start=min(u_values) - 3.0 * self._pitch / 4.0, stop=max(u_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
+        v_bins = np.arange(start=min(v_values) - 3.0 * self._pitch / 4.0, stop=max(v_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
+        w_bins = np.arange(start=min(w_values) - 3.0 * self._pitch / 4.0, stop=max(w_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
+
+        hist, _ = np.histogramdd(
+            (u_values, v_values, w_values),
+            bins = (u_bins, v_bins, w_bins), weights=[hit.weight for hit in hits]
+        )
+        
+        ## get eigenvalues and eigenvectors of Hessian
+        hess_eigenvals, hess_eigenvecs = self._hess_eigen(hist)
+
+        ## compute the ridgeness score
+        ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
+
+        ## now make the peak hits
+        ## loop over the fiber hits, check if the "pixel" it falls into is a ridge, if so save it as a peak hit
+        for hit in hits:
+
+            u = hit.x
+            v = hit.y
+            w = hit.z
+
+            u_bin = np.digitize(u, u_bins)
+            v_bin = np.digitize(v, v_bins)
+            w_bin = np.digitize(w, w_bins)
+
+            ## have already applied all our conditions when calculating ridgeness and don't fill it if it fails
+            ## so here we just need to check if it's not 0
+            if ridgeness[u_bin -1, v_bin -1, w_bin - 1] > 0.0:
+                peak_hits.append(hit)
+
+            else:
+                unused.add(hit)
+
+        event.add_data("3d_hits", peak_hits)
+        event.add_data("3d_peak_hits", peak_hits)
+        event.add_data("unused_3d_hits", unused)
+        
+    def _finalise(self):
+
+        if self._debug_pdf is not None:
+            self._debug_pdf.close()
+        
+        if self._pdf is not None:
+            self._pdf.close()
