@@ -4,6 +4,8 @@ from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.peak_finding import HesseRidgeDetection2D, PeakFinder2D
 from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN
 from liquidreco.modules.hit_building import HitBuilder2D, HitBuilder3D
+from liquidreco.modules.utility import WeightScaling
+from liquidreco.modules.plotting import HitPlotter2D, HitPlotter3D
 
 class Singleton(type):
     
@@ -69,10 +71,23 @@ class ModuleList(metaclass=Singleton):
         return self._module_map[name]
 
     
-## Register all the modules
-ModuleList().register(HesseRidgeDetection2D)
-ModuleList().register(PeakFinder2D)
-ModuleList().register(HoughTransform)
-#ModuleList().register(LocalMeanDBSCAN)
+####### Register all the modules ###########
+
+## utility
+ModuleList().register(WeightScaling)
+
+## hit building
 ModuleList().register(HitBuilder2D)
 ModuleList().register(HitBuilder3D)
+
+## peak finding
+ModuleList().register(HesseRidgeDetection2D)
+ModuleList().register(PeakFinder2D)
+
+## reconstruction
+ModuleList().register(HoughTransform)
+#ModuleList().register(LocalMeanDBSCAN) <- this thing is mad broken... maybe one day it will be fixed
+
+## plotting
+ModuleList().register(HitPlotter2D)
+ModuleList().register(HitPlotter3D)
