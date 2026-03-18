@@ -13,6 +13,7 @@ from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from scipy.linalg import eig
 
 import typing
+import json
 
 from liquidreco.hit import Hit, Hit2D, Hit3D
 from liquidreco.modules.module_base import ModuleBase
@@ -276,6 +277,7 @@ neighbourhood.
         
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
         self.outputs = [
+            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits",
             "x_peak_hits", "y_peak_hits", "z_peak_hits",
             "unused_x_hits", "unused_y_hits", "unused_z_hits",
             "laplace_x_peaks", "laplace_y_peaks", "laplace_z_peaks"
@@ -449,9 +451,9 @@ neighbourhood.
             plt.close(fig)
 
 
-        event.add_data("x_peak_hits", x_fiber_hits)
-        event.add_data("y_peak_hits", y_fiber_hits)
-        event.add_data("z_peak_hits", z_fiber_hits)
+        event.add_data("x_peak_hits", x_peak_hits)
+        event.add_data("y_peak_hits", y_peak_hits)
+        event.add_data("z_peak_hits", z_peak_hits)
         
         event.add_data("unused_x_hits", x_unused)
         event.add_data("unused_y_hits", y_unused)
@@ -460,6 +462,10 @@ neighbourhood.
         event.add_data("laplace_x_peaks", laplace_x_peak_hits)
         event.add_data("laplace_y_peaks", laplace_y_peak_hits)
         event.add_data("laplace_z_peaks", laplace_z_peak_hits)
+
+        event.add_data("x_fiber_hits", x_peak_hits)
+        event.add_data("y_fiber_hits", y_peak_hits)
+        event.add_data("z_fiber_hits", z_peak_hits)
 
         return
             
@@ -758,21 +764,70 @@ class HesseRidgeDetection2D(ModuleBase):
         super().__init__()
 
         self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+        self.outputs = [
+            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits",
+            "x_peak_hits", "y_peak_hits", "z_peak_hits",
+            "unused_x_hits", "unused_y_hits", "unused_z_hits"
+        ]
 
     def _initialise(self) -> None:
         
         self._pitch = self.args.pitch
 
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-event-examples.pdf")
-        self._hesse_reco_pdf = matplotlib.backends.backend_pdf.PdfPages("Hesse-reconstructed-event-examples.pdf")
+        self._min_charge = self.args.min_charge
+        self._max_pos_curvature = self.args.max_positive_curvature
+        self._min_negative_curvature = self.args.min_negative_curvature
+
+        self._debug_pdf = None
+        self._pdf = None
+
+        if self.args.make_debug_plots:
+            self._debug_pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.debug_plot_file_name)
+        if self.args.make_plots:
+            self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.plot_file_name)
 
     def _setup_cli_options(self, parser):
 
         ## TODO: Make geometry manager class to store this kind of thing
         parser.add_argument(
             "--pitch", 
-            help="The fiber pitch.", 
+            help="The fiber pitch", 
             required = False, default = 10.0, type = float,
+        )
+        parser.add_argument(
+            "--min-charge", 
+            help="The minimum charge that a hit must have to be considered a peak hit", 
+            required = False, default = 80.0, type = float,
+        )
+        parser.add_argument(
+            "--max-positive-curvature", 
+            help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
+            required = False, default = 50.0, type = float,
+        )
+        parser.add_argument(
+            "--min-negative-curvature", 
+            help="The minimum negative or 'downwards' curvature that is required in the neighbourhood of a hit for it to be considered a peak. The closer this is to 0.0, the more shallow peaks are allowed, the higher it is, the sharper the peaks must be", 
+            required = False, default = 50.0, type = float,
+        )
+        parser.add_argument(
+            "--make-plots", 
+            help="Whether to make basic plots", 
+            required = False, default = False, type = bool,
+        )
+        parser.add_argument(
+            "--plot-file-name", 
+            help="Name of file to save plots to if --make-plots option is true", 
+            required = False, default = "Hesse-example-plots.pdf", type = str,
+        )
+        parser.add_argument(
+            "--make-debug-plots", 
+            help="Whether to make debug plots", 
+            required = False, default = False, type = bool,
+        )
+        parser.add_argument(
+            "--debug-plot-file-name", 
+            help="Name of file to save debug plots to if --make-debug-plots option is true", 
+            required = False, default = "Hesse-debug-plots.pdf", type = str,
         )
         
     def _gradient(self, hist: np.array, normalise: bool = False) -> typing.Tuple[np.array]:
@@ -820,7 +875,72 @@ class HesseRidgeDetection2D(ModuleBase):
             hvu = np.divide(hvu, hist, where = hist != 0.0)
 
         return huu, hvv, huv, hvu
+    
+    def _hess_eigen(self, hist: np.array) -> typing.Tuple[np.array]:
+        """Get the eigenvalues and vectors of the hessian matrix of an input image
 
+        :param hist: The input image
+        :type hist: np.array
+        :return: The Hessian eigenvalues and eigenvectors
+        :rtype: typing.Tuple[np.array]
+        """
+
+        huu, hvv, huv, hvu = self._hessian(hist)
+        
+        hess_eigenvals = np.ndarray((2, *huu.shape))
+        hess_eigenvecs = np.ndarray((2, 2, *huu.shape))
+        
+        for dim0 in range(0, huu.shape[-2]):
+            for dim1 in range(0, huu.shape[-1]):
+
+                if(hist[dim0, dim1] == 0.0):
+                    hess_eigenvals[:, dim0, dim1] = 0.0
+                    hess_eigenvecs[:, :, dim0, dim1] = 0.0
+                
+                else:
+                    evals, evecs = eig(
+                        np.array(
+                            [
+                                [huu[dim0, dim1], hvu[dim0, dim1]],
+                                [huv[dim0, dim1], hvv[dim0, dim1]]
+                            ]
+                        )
+                    )
+
+                    if (np.any(np.imag(evals) != 0.0)):
+                        print(f"WARNING: complex eigenvalues found in Hessian!!!")
+
+                    hess_eigenvals[:, dim0, dim1] = np.real(evals[:])
+                    hess_eigenvecs[:, :, dim0, dim1] = np.real(evecs[:, :])
+
+        return hess_eigenvals, hess_eigenvecs
+
+    def _compute_ridgeness(self, hist: np.array, hess_eigenvals: np.array) -> np.array:
+        """Compute the "ridgeness" score for each pixel in an input image
+
+        :param hist: The 2D input image
+        :type hist: np.array
+        :param hess_eigenvals: The eigenvalues of the hessian for the image (computed using the `_hess_eigen()` method)
+        :type hess_eigenvals: np.array
+        :return: The 2D array of ridgeness scores
+        :rtype: np.array
+        """
+
+        ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
+        for dim0 in range(0, hess_eigenvals.shape[-2]):
+            for dim1 in range(0, hess_eigenvals.shape[-1]):
+
+                if (
+                    hist[dim0, dim1] > self._min_charge and
+                    np.all(hess_eigenvals[:, dim0, dim1] < self._max_pos_curvature) and
+                    -np.min(hess_eigenvals[:, dim0, dim1]) > self._min_negative_curvature
+                ):
+                    
+                    ridgeness[dim0, dim1, 0] = -np.min(hess_eigenvals[:, dim0, dim1])
+
+        return ridgeness
+
+        
     def _process(self, event:Event):
         """ Perform Hough transform on an event and save the result to a given file
 
@@ -832,14 +952,32 @@ class HesseRidgeDetection2D(ModuleBase):
         y_fiber_hits = event["y_fiber_hits"]
         z_fiber_hits = event["z_fiber_hits"]
 
-        for fiber_hits, u_name, v_name in zip(
+        x_peak_hits = list()
+        y_peak_hits = list()
+        z_peak_hits = list()
+
+        x_unused = set()
+        y_unused = set()
+        z_unused = set()
+
+        for fiber_hits, u_name, v_name, peak_hits, unused_hits in zip(
             [
                 x_fiber_hits, 
                 y_fiber_hits, 
                 z_fiber_hits
             ],
             ["y", "x", "x"],
-            ["z", "z", "y"]
+            ["z", "z", "y"],
+            [
+                x_peak_hits,
+                y_peak_hits,
+                z_peak_hits
+            ],
+            [
+                x_unused,
+                y_unused,
+                z_unused
+            ]
         ):
             
             u_values = [getattr(hit, u_name) for hit in fiber_hits]
@@ -853,99 +991,156 @@ class HesseRidgeDetection2D(ModuleBase):
                 bins = (u_bins, v_bins), weights=[hit.weight for hit in fiber_hits]
             )
             
-            ## Hessian eigenvalues
-            huu, hvv, huv, hvu = self._hessian(hist)
-            
-            hess_eigenvals = np.ndarray((2, *huu.shape))
-            hess_eigenvecs = np.ndarray((2, 2, *huu.shape))
-            
-            for dim0 in range(0, huu.shape[-2]):
-                for dim1 in range(0, huu.shape[-1]):
+            ## get eigenvalues and eigenvectors of Hessian
+            hess_eigenvals, hess_eigenvecs = self._hess_eigen(hist)
 
-                    if(hist[dim0, dim1] == 0.0):
-                        hess_eigenvals[:, dim0, dim1] = 0.0
-                        hess_eigenvecs[:, :, dim0, dim1] = 0.0
-                    
-                    else:
-                        evals, evecs = eig(
-                            np.array(
-                                [
-                                    [huu[dim0, dim1], hvu[dim0, dim1]],
-                                    [huv[dim0, dim1], hvv[dim0, dim1]]
-                                ]
-                            )
-                        )
+            ## compute the ridgeness score
+            ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
 
-                        if (np.any(np.imag(evals) != 0.0)):
-                            print(f"WARNING: complex eigenvalues found in Hessian!!!")
+            if self._debug_pdf is not None:
+                self._make_debug_plots(
+                    hist,
+                    u_name, v_name
+                )
+                
+            if self._pdf is not None:
+                self._make_plot(
+                    ridgeness,
+                    hess_eigenvals,
+                    hess_eigenvecs,
+                    u_name, v_name
+                )
 
-                        hess_eigenvals[:, dim0, dim1] = np.real(evals[:])
-                        hess_eigenvecs[:, :, dim0, dim1] = np.real(evecs[:, :])
+            ## now make the peak hits
+            ## loop over the fiber hits, check if the "pixel" it falls into is a ridge, if so save it as a peak hit
+            for hit in fiber_hits:
 
-            ridgeness = np.zeros(shape=(*hess_eigenvals.shape[1:], 1))
-            for dim0 in range(0, hess_eigenvals.shape[-2]):
-                for dim1 in range(0, hess_eigenvals.shape[-1]):
+                u = getattr(hit, u_name)
+                v = getattr(hit, v_name)
 
-                    if (np.any(hess_eigenvals[:, dim0, dim1] > 0.0)) or (np.all(hess_eigenvals[:, dim0, dim1] == 0.0)):
-                        pass
+                u_bin = np.digitize(u, u_bins)
+                v_bin = np.digitize(v, v_bins)
 
-                    else:
-                        ridgeness[dim0, dim1, 0] = np.linalg.norm(hess_eigenvals[:, dim0, dim1])
-            
-            fig, ax = plt.subplots(1, 8, figsize=(50, 10))
-            ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
-            ax[0].set_title("Original Event")
+                ## have already applied all our conditions when calculating ridgeness and don't fill it if it fails
+                ## so here we just need to check if it's not 0
+                if ridgeness[u_bin -1, v_bin -1] > 0.0:
+                    peak_hits.append(hit)
 
-            ax[1].imshow(huu, cmap=plt.get_cmap("gray"))
-            ax[1].set_title(f"H_{u_name}{u_name}")
-            ax[2].imshow(huv, cmap=plt.get_cmap("gray"))
-            ax[2].set_title(f"H_{u_name}{v_name}")
-            ax[3].imshow(hvu, cmap=plt.get_cmap("gray"))
-            ax[3].set_title(f"H_{v_name}{u_name}")
-            ax[4].imshow(hvv, cmap=plt.get_cmap("gray"))
-            ax[4].set_title(f"H_{v_name}{v_name}")
+                else:
+                    unused_hits.add(hit)
 
-            du, dv = self._gradient(hist)
-            ax[5].imshow(du, cmap=plt.get_cmap("gray"))
-            ax[5].set_title(f"D_{u_name}")
-            ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
-            ax[6].set_title(f"D_{v_name}")
 
-            #ridgeness = np.clip(-np.max(hess_eigenvals, axis=0), 0.0, 99999.9)
-            ridgeness /= np.max(ridgeness)
-            ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
-            ax[7].set_title("Hessian Filter")
+        event.add_data("x_fiber_hits", x_peak_hits)
+        event.add_data("y_fiber_hits", y_peak_hits)
+        event.add_data("z_fiber_hits", z_peak_hits)
 
-            self._pdf.savefig(fig)
-            plt.close(fig)
-
-            fig = plt.figure(figsize=(10, 10))
-            plt.imshow(ridgeness, cmap=plt.get_cmap("gray"))
-            plt.colorbar()
-            plt.title("Hessian Filter")
-
-            for dim0 in range(0, hess_eigenvecs.shape[-2]):
-                for dim1 in range(0, hess_eigenvecs.shape[-1]):
-
-                    if ridgeness[dim0, dim1] > 0.0:
-                        max_eval_id = np.argmin(hess_eigenvals[:, dim0, dim1])
-
-                        plt.plot(
-                            (
-                                dim1 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
-                                dim1 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
-                            ),
-                            (
-                                dim0 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
-                                dim0 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
-                            ), 
-                            c = "r"
-                        )
-
-            self._hesse_reco_pdf.savefig(fig)
-            plt.close(fig)
+        event.add_data("x_peak_hits", x_peak_hits)
+        event.add_data("y_peak_hits", y_peak_hits)
+        event.add_data("z_peak_hits", z_peak_hits)
+        
+        event.add_data("unused_x_hits", x_unused)
+        event.add_data("unused_y_hits", y_unused)
+        event.add_data("unused_z_hits", z_unused)
         
     def _finalise(self):
-        self._pdf.close()
-        self._hesse_reco_pdf.close()
+
+        if self._debug_pdf is not None:
+            self._debug_pdf.close()
+        
+        if self._pdf is not None:
+            self._pdf.close()
+
+    def _make_plot(
+            self, 
+            ridgeness: np.array, 
+            hess_eigenvals: np.array, 
+            hess_eigenvecs: np.array,
+            u_name: str,
+            v_name: str
+        ) -> None:
+        """Make plot of the ridgeness score of each pixel (fiber) with direction of the detected ridges overlaid
+
+        :param ridgeness: The 2D array defining the ridgeness score for each pixel
+        :type ridgeness: np.array
+        :param hess_eigenvals: The 3D array of the eigenvalues of the hessian at each pixel
+        :type hess_eigenvals: np.array
+        :param hess_eigenvecs: The 3D array of the eigenvectors of the hessian at each pixel
+        :type hess_eigenvecs: np.array
+        :param u_name: The label of the u direction ("x", "y" or "z")
+        :type u_name: str
+        :param v_name: The label of the v direction ("x", "y" or "z")
+        :type v_name: str
+        """
+        
+        fig = plt.figure(figsize=(10, 10))
+        plt.imshow(ridgeness, cmap=plt.get_cmap("gray"))
+        plt.colorbar()
+        plt.title("Hessian Filter")
+        plt.xlabel(u_name)
+        plt.ylabel(v_name)
+
+        for dim0 in range(0, hess_eigenvecs.shape[-2]):
+            for dim1 in range(0, hess_eigenvecs.shape[-1]):
+
+                if ridgeness[dim0, dim1] > 0.0:
+                    max_eval_id = np.argmin(hess_eigenvals[:, dim0, dim1])
+
+                    plt.plot(
+                        (
+                            dim1 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
+                            dim1 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
+                        ),
+                        (
+                            dim0 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
+                            dim0 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
+                        ), 
+                        c = "r"
+                    )
+
+        self._pdf.savefig(fig)
+        plt.close(fig)
+
+    def _make_debug_plots(
+        self,
+        hist: np.array,
+        u_name: str, v_name: str
+    ):
+        """
+        Make detailed plots of values used in the Hesse ridge detection algorithm
+        
+        :param hist: The input image
+        :type hist: np.array
+        :param u_name: The label of the u direction ("x", "y" or "z")
+        :type u_name: str
+        :param v_name: The label of the v direction ("x", "y" or "z")
+        :type v_name: str
+        """
+
+        huu, hvv, huv, hvu = self._hessian(hist)
+        fig, ax = plt.subplots(1, 8, figsize=(50, 10))
+        ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
+        ax[0].set_title("Original Event")
+
+        ax[1].imshow(huu, cmap=plt.get_cmap("gray"))
+        ax[1].set_title(f"H_{u_name}{u_name}")
+        ax[2].imshow(huv, cmap=plt.get_cmap("gray"))
+        ax[2].set_title(f"H_{u_name}{v_name}")
+        ax[3].imshow(hvu, cmap=plt.get_cmap("gray"))
+        ax[3].set_title(f"H_{v_name}{u_name}")
+        ax[4].imshow(hvv, cmap=plt.get_cmap("gray"))
+        ax[4].set_title(f"H_{v_name}{v_name}")
+
+        du, dv = self._gradient(hist)
+        ax[5].imshow(du, cmap=plt.get_cmap("gray"))
+        ax[5].set_title(f"D_{u_name}")
+        ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
+        ax[6].set_title(f"D_{v_name}")
+
+        hess_eigenvals, _ = self._hess_eigen(hist)
+        ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
+        ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
+        ax[7].set_title("Hessian Filter")
+
+        self._debug_pdf.savefig(fig)
+        plt.close(fig)
         
