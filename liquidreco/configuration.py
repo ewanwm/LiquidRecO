@@ -244,7 +244,6 @@ class Configuration:
         if self.base_args.command == "fit":
             self.fit_args = self.base_args["fit"]
         if self.base_args.command == "make-config":
-            print(self.base_args)
             self.make_config_args = self.base_args["make-config"]
 
         ## if -c option specified, parse the module options from config file
