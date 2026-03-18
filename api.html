@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API &mdash; LiquidRecO 0.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -68,27 +68,18 @@
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit3D.from_fiber_hits"><code class="docutils literal notranslate"><span class="pre">Hit3D.from_fiber_hits()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.build_3d_hits"><code class="docutils literal notranslate"><span class="pre">build_3d_hits()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.local_normalisation"><code class="docutils literal notranslate"><span class="pre">local_normalisation()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#peak-finding">Peak_finding</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.peak_finding.LaplaceFitter"><code class="docutils literal notranslate"><span class="pre">LaplaceFitter</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.peak_finding.PeakFinder2D"><code class="docutils literal notranslate"><span class="pre">PeakFinder2D</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#liquidreco.peak_finding.PeakFinder2D.cluster_hits"><code class="docutils literal notranslate"><span class="pre">PeakFinder2D.cluster_hits()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#liquidreco.peak_finding.PeakFinder2D.finalise"><code class="docutils literal notranslate"><span class="pre">PeakFinder2D.finalise()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#peak-finding">Peak_finding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reconstruction">Reconstruction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#event-processor">Event Processor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor"><code class="docutils literal notranslate"><span class="pre">EventProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor.event_loop"><code class="docutils literal notranslate"><span class="pre">EventProcessor.event_loop()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#reconstruction">Reconstruction</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.HesseRidgeDetection"><code class="docutils literal notranslate"><span class="pre">HesseRidgeDetection</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.HoughTransform"><code class="docutils literal notranslate"><span class="pre">HoughTransform</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.LocalMeanDBSCAN"><code class="docutils literal notranslate"><span class="pre">LocalMeanDBSCAN</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#liquidreco.reconstruction.ReconstructionAlgorithm"><code class="docutils literal notranslate"><span class="pre">ReconstructionAlgorithm</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#event-processor">Event Processor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
@@ -254,32 +245,6 @@ e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z pe
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="liquidreco.hit.build_3d_hits">
-<span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">build_3d_hits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_fiber_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_fiber_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_fiber_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_3_fibers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pitch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(10.0,</span> <span class="pre">10.0,</span> <span class="pre">10.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_2d_hit_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_required_peaks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_weighted_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit" title="liquidreco.hit.Hit"><span class="pre">Hit</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.hit.build_3d_hits" title="Link to this definition"></a></dt>
-<dd><p>Makes 3D hits from arrays of info about 2d fiber hits</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>x_fiber_hits</strong> (<em>List</em><em>[</em><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a><em>]</em>) – List of 2D YZ fibers</p></li>
-<li><p><strong>y_fiber_hits</strong> (<em>List</em><em>[</em><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a><em>]</em>) – List of 2D XZ fibers</p></li>
-<li><p><strong>z_fiber_hits</strong> (<em>List</em><em>[</em><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a><em>]</em>) – List of 2D XY fibers</p></li>
-<li><p><strong>require_3_fibers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to require 3 fibers to form a hit or allow only on x and one y fiber, defaults to True</p></li>
-<li><p><strong>pitch</strong> (<em>Tuple</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – The distance between fibers in each direction, defaults to (10.0, 10.0, 10.0)</p></li>
-<li><p><strong>min_2d_hit_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum weight a 2D fiber hit must have to be considered when building 3D hits, defaults to 0.0</p></li>
-<li><p><strong>n_required_peaks</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of “peak hits” required in each direction to form a valid 3D hit (see <a class="reference internal" href="#liquidreco.hit.Hit3D.from_fiber_hits" title="liquidreco.hit.Hit3D.from_fiber_hits"><code class="xref py py-func docutils literal notranslate"><span class="pre">Hit3D.from_fiber_hits()</span></code></a> for more details), defaults to None</p></li>
-<li><p><strong>max_weighed_distance</strong> – The maximum “real” i.e. peak weighted discance between 2D hits in order for them to be considered for combining into a 3D hit. Specified as a fraction of fiber pitch, defaults to None</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>list of 3d hits</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<a class="reference internal" href="#liquidreco.hit.Hit" title="liquidreco.hit.Hit">Hit</a>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="liquidreco.hit.local_normalisation">
 <span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">local_normalisation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_bins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.local_normalisation" title="Link to this definition"></a></dt>
 <dd><p>do a local normalisation of the hits so that lokal peaks have “charge” of 1
@@ -290,86 +255,31 @@ and hits in the neighbourhood have their charges normalised by this value</p>
 </section>
 <section id="peak-finding">
 <h2>Peak_finding<a class="headerlink" href="#peak-finding" title="Link to this heading"></a></h2>
-<blockquote>
-<div><dl class="py class" id="module-liquidreco.peak_finding">
-<dt class="sig sig-object py" id="liquidreco.peak_finding.LaplaceFitter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.peak_finding.</span></span><span class="sig-name descname"><span class="pre">LaplaceFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighbourhood_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">45.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_candidate_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_n_neighbours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.peak_finding.LaplaceFitter" title="Link to this definition"></a></dt>
-<dd><p>Performs a fit of an ensemble of laplace distributions to observed collected charges in fibers in order to try to determine which</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.peak_finding.PeakFinder2D">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.peak_finding.</span></span><span class="sig-name descname"><span class="pre">PeakFinder2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peak_prominance_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_blobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DBSCAN_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'eps':</span> <span class="pre">10.5}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">laplace_fit_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.peak_finding.PeakFinder2D" title="Link to this definition"></a></dt>
-<dd><p>Finds peaks in raw fiber hits and performs position corrections</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.peak_finding.PeakFinder2D.cluster_hits">
-<span class="sig-name descname"><span class="pre">cluster_hits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fiber_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.peak_finding.PeakFinder2D.cluster_hits" title="Link to this definition"></a></dt>
-<dd><p>Cluster hits using this PeakFinder2Ds _clusterer (default is DBSCAN but you can set it to whatever you want)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fiber_hits</strong> (<em>List</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits to cluster</p></li>
-<li><p><strong>u</strong> (<em>str</em>) – the “u” direction, should be ‘x’, ‘y’ or ‘z’ depending on the projection</p></li>
-<li><p><strong>v</strong> (<em>str</em>) – the “v” direction, should be ‘x’, ‘y’ or ‘z’ depending on the projection</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>hits broken down into clusters</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>List</em>[‘Hit2D’]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.peak_finding.PeakFinder2D.finalise">
-<span class="sig-name descname"><span class="pre">finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.peak_finding.PeakFinder2D.finalise" title="Link to this definition"></a></dt>
-<dd><p>Tidy up and close open pdfs</p>
-</dd></dl>
-
-</dd></dl>
-
-</div></blockquote>
 </section>
 <section id="reconstruction">
 <h2>Reconstruction<a class="headerlink" href="#reconstruction" title="Link to this heading"></a></h2>
-<blockquote>
-<div><p id="module-liquidreco.reconstruction">Module to be used to reconstruct tracks from hits.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.reconstruction.HesseRidgeDetection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_orthogonal_dirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.reconstruction.HesseRidgeDetection" title="Link to this definition"></a></dt>
-<dd><p>Performs simple Hough line transform</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.reconstruction.HoughTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_charge_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_plot_charge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_gifs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.reconstruction.HoughTransform" title="Link to this definition"></a></dt>
-<dd><p>Performs simple Hough line transform</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.reconstruction.LocalMeanDBSCAN">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.reconstruction.</span></span><span class="sig-name descname"><span class="pre">LocalMeanDBSCAN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_ball_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbscan_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbscan_min_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_charge_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.reconstruction.LocalMeanDBSCAN" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.reconstruction.ReconstructionAlgorithm">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.reconstruction.</span></span><span class="sig-name descname"><span class="pre">ReconstructionAlgorithm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.reconstruction.ReconstructionAlgorithm" title="Link to this definition"></a></dt>
-<dd><p>Base reconstruction algorithm.</p>
-<p>Should not be used directly but reconstruction algorithms should derive 
-this.</p>
-</dd></dl>
-
-</div></blockquote>
 </section>
 <section id="event-processor">
 <h2>Event Processor<a class="headerlink" href="#event-processor" title="Link to this heading"></a></h2>
 <blockquote>
-<div></div></blockquote>
+<div><dl class="py class" id="module-liquidreco.event_processor">
+<dt class="sig sig-object py" id="liquidreco.event_processor.EventProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.event_processor.</span></span><span class="sig-name descname"><span class="pre">EventProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ModuleBase</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_events</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor" title="Link to this definition"></a></dt>
+<dd><p>Main application loop for liquidreco</p>
+<p>This is responsible for loading up events from the input file and
+looping over them, applying fit modules specified by the user.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.event_processor.EventProcessor.event_loop">
+<span class="sig-name descname"><span class="pre">event_loop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor.event_loop" title="Link to this definition"></a></dt>
+<dd><p>Does the loop over all events, applying each specified module to them</p>
+</dd></dl>
+
+</dd></dl>
+
+</div></blockquote>
 </section>
 <section id="plotting">
-<span id="module-liquidreco.event_processor"></span><h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
+<h2>Plotting<a class="headerlink" href="#plotting" title="Link to this heading"></a></h2>
 <blockquote>
 <div></div></blockquote>
 </section>
