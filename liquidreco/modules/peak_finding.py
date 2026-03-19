@@ -754,7 +754,7 @@ neighbourhood.
 
 
 class HesseRidgeDetection2D(ModuleBase):
-    """ Performs simple Hough line transform
+    """Performs "ridge detection" using the Hessian of a 2D image of the detector
     """
 
     def __init__(
@@ -1146,7 +1146,7 @@ class HesseRidgeDetection2D(ModuleBase):
         
 
 class HesseRidgeDetection3D(ModuleBase):
-    """ Performs simple Hough line transform
+    """Performs "ridge detection" using the Hessian of a 3D image of the detector
     """
 
     def __init__(
