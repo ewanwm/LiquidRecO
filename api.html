@@ -92,6 +92,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#peak-finding">Peak Finding</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D"><code class="docutils literal notranslate"><span class="pre">HesseRidgeDetection2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D"><code class="docutils literal notranslate"><span class="pre">HesseRidgeDetection3D</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.LaplaceFitter"><code class="docutils literal notranslate"><span class="pre">LaplaceFitter</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.peak_finding.PeakFinder2D"><code class="docutils literal notranslate"><span class="pre">PeakFinder2D</span></code></a></li>
 </ul>
@@ -479,7 +480,13 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 <div><dl class="py class" id="module-liquidreco.modules.peak_finding">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection2D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D" title="Link to this definition"></a></dt>
-<dd><p>Performs simple Hough line transform</p>
+<dd><p>Performs “ridge detection” using the Hessian of a 2D image of the detector</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection3D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D" title="Link to this definition"></a></dt>
+<dd><p>Performs “ridge detection” using the Hessian of a 3D image of the detector</p>
 </dd></dl>
 
 <dl class="py class">
