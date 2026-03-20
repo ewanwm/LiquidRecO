@@ -292,12 +292,12 @@ neighbourhood.
         self.laplace_fit_args = json.loads(self.args.laplace_fit_args)
 
         self._clusterer = DBSCAN(**self.DBSCAN_args)
-        self._laplace_fitter = LaplaceFitter(**self.laplace_fit_args, make_plots=self.args.make_plots)
+        self._laplace_fitter = LaplaceFitter(**self.laplace_fit_args, make_plots=self.args._make_plots)
 
         self._peak_prominance_threshold = self.args.peak_prominance_threshold
         self._peak_candidate_weight_threshold = self.args.peak_candidate_weight_threshold
         self._fit_blobs = self.args.fit_blobs
-        self._make_plots = self.args.make_plots
+        self._make_plots = self.args._make_plots
 
     def _setup_cli_options(self, parser):
         
@@ -801,6 +801,9 @@ class HesseRidgeDetection2D(ModuleBase):
         self._debug_pdf = None
         self._pdf = None
 
+        self._make_plots = self.args.make_plots
+        self._make_debug_plots = self.args.make_debug_plots
+        
         if self.args.make_debug_plots:
             self._debug_pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.debug_plot_file_name)
         if self.args.make_plots:
@@ -980,14 +983,19 @@ class HesseRidgeDetection2D(ModuleBase):
         y_unused = set()
         z_unused = set()
 
-        for fiber_hits, u_name, v_name, peak_hits, unused_hits in zip(
+        fig, axs = None, None
+        if self._make_plots:
+            fig, axs = plt.subplots(2, 2, figsize=(15, 15))
+            fig.suptitle("Hessian Filter")
+
+        for fiber_hits, u_name, v_name, peak_hits, unused_hits, ax_ids in zip(
             [
                 x_fiber_hits, 
                 y_fiber_hits, 
                 z_fiber_hits
             ],
-            ["y", "x", "x"],
-            ["z", "z", "y"],
+            ["z", "x", "x"],
+            ["y", "z", "y"],
             [
                 x_peak_hits,
                 y_peak_hits,
@@ -997,7 +1005,8 @@ class HesseRidgeDetection2D(ModuleBase):
                 x_unused,
                 y_unused,
                 z_unused
-            ]
+            ],
+            [[1,1], [0,0], [1,0]]
         ):
             
             u_values = [getattr(hit, u_name) for hit in fiber_hits]
@@ -1018,8 +1027,8 @@ class HesseRidgeDetection2D(ModuleBase):
             ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
 
             if self._debug_pdf is not None:
-                self._make_debug_plots(
-                    hist,
+                self._do_make_debug_plots(
+                    np.transpose(hist, axes=(1,0)),
                     u_name, v_name
                 )
                 
@@ -1028,7 +1037,7 @@ class HesseRidgeDetection2D(ModuleBase):
                     ridgeness,
                     hess_eigenvals,
                     hess_eigenvecs,
-                    u_name, v_name
+                    ax = axs[ax_ids[0], ax_ids[1]]
                 )
 
             ## now make the peak hits
@@ -1058,6 +1067,19 @@ class HesseRidgeDetection2D(ModuleBase):
                 else:
                     unused_hits.add(hit)
 
+        if self._make_plots:
+        
+            make_corner_plot_fiber_hits(
+                fig,
+                axs, 
+                [],
+                [],
+                [],
+                label = ("x [pixel]", "y [pixel]", "z [pixel]")
+            )
+
+            self._pdf.savefig(fig)
+            plt.close(fig)
 
         event.add_data("x_fiber_hits", x_peak_hits)
         event.add_data("y_fiber_hits", y_peak_hits)
@@ -1084,8 +1106,7 @@ class HesseRidgeDetection2D(ModuleBase):
             ridgeness: np.array, 
             hess_eigenvals: np.array, 
             hess_eigenvecs: np.array,
-            u_name: str,
-            v_name: str
+            ax: plt.axis
         ) -> None:
         """Make plot of the ridgeness score of each pixel (fiber) with direction of the detected ridges overlaid
 
@@ -1099,14 +1120,12 @@ class HesseRidgeDetection2D(ModuleBase):
         :type u_name: str
         :param v_name: The label of the v direction ("x", "y" or "z")
         :type v_name: str
+        :param ax: The pyplot axis object to plot to
+        :type ax: plt.axis
         """
         
-        fig = plt.figure(figsize=(10, 10))
-        plt.imshow(ridgeness, cmap=plt.get_cmap("gray"))
-        plt.colorbar()
-        plt.title("Hessian Filter")
-        plt.xlabel(u_name)
-        plt.ylabel(v_name)
+        mappable = ax.imshow(np.transpose(ridgeness, axes=(1,0,2)), cmap=plt.get_cmap("gray"), origin='lower')
+        plt.colorbar(mappable)
 
         for dim0 in range(0, hess_eigenvecs.shape[-2]):
             for dim1 in range(0, hess_eigenvecs.shape[-1]):
@@ -1114,22 +1133,20 @@ class HesseRidgeDetection2D(ModuleBase):
                 if ridgeness[dim0, dim1] > 0.0:
                     max_eval_id = np.argmax(hess_eigenvals[:, dim0, dim1])
 
-                    plt.plot(
-                        (
-                            dim1 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
-                            dim1 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
-                        ),
+                    ax.plot(
                         (
                             dim0 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
                             dim0 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
+                        ),
+                        (
+                            dim1 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
+                            dim1 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
                         ), 
-                        c = "r"
+                        c = "r",
+                        linewidth = 0.25
                     )
 
-        self._pdf.savefig(fig)
-        plt.close(fig)
-
-    def _make_debug_plots(
+    def _do_make_debug_plots(
         self,
         hist: np.array,
         u_name: str, v_name: str
@@ -1147,27 +1164,27 @@ class HesseRidgeDetection2D(ModuleBase):
 
         huu, hvv, huv, hvu = self._hessian(hist)
         fig, ax = plt.subplots(1, 8, figsize=(50, 10))
-        ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"))
+        ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"), origin='lower')
         ax[0].set_title("Original Event")
 
-        ax[1].imshow(huu, cmap=plt.get_cmap("gray"))
+        ax[1].imshow(huu, cmap=plt.get_cmap("gray"), origin='lower')
         ax[1].set_title(f"H_{u_name}{u_name}")
-        ax[2].imshow(huv, cmap=plt.get_cmap("gray"))
+        ax[2].imshow(huv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[2].set_title(f"H_{u_name}{v_name}")
-        ax[3].imshow(hvu, cmap=plt.get_cmap("gray"))
+        ax[3].imshow(hvu, cmap=plt.get_cmap("gray"), origin='lower')
         ax[3].set_title(f"H_{v_name}{u_name}")
-        ax[4].imshow(hvv, cmap=plt.get_cmap("gray"))
+        ax[4].imshow(hvv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[4].set_title(f"H_{v_name}{v_name}")
 
         du, dv = self._gradient(hist)
-        ax[5].imshow(du, cmap=plt.get_cmap("gray"))
+        ax[5].imshow(du, cmap=plt.get_cmap("gray"), origin='lower')
         ax[5].set_title(f"D_{u_name}")
-        ax[6].imshow(dv, cmap=plt.get_cmap("gray"))
+        ax[6].imshow(dv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[6].set_title(f"D_{v_name}")
 
         hess_eigenvals, _ = self._hess_eigen(hist)
         ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
-        ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"))
+        ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"), origin='lower')
         ax[7].set_title("Hessian Filter")
 
         self._debug_pdf.savefig(fig)
@@ -1199,12 +1216,15 @@ class HesseRidgeDetection3D(ModuleBase):
         self._max_pos_curvature = self.args.max_positive_curvature
         self._min_negative_curvature = self.args.min_negative_curvature
 
+        self._make_plots = self.args.make_plots
+        self._make_debug_plots = self.args.make_debug_plots
+
         self._debug_pdf = None
         self._pdf = None
 
-        if self.args.make_debug_plots:
+        if self._make_debug_plots:
             self._debug_pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.debug_plot_file_name)
-        if self.args.make_plots:
+        if self._make_plots:
             self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.plot_file_name)
 
     def _setup_cli_options(self, parser):

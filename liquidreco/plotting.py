@@ -153,7 +153,8 @@ def make_corner_plot_fiber_hits(
         cmap=plt.get_cmap("coolwarm"),
         colour_override: str = None,
         plot_directions: bool = False,
-        direction_line_length: float = 10.0
+        direction_line_length: float = 10.0,
+        label = ("x [mm]", "y [mm]", "z [mm]")
     ):
 
     c = colour_override
@@ -203,7 +204,7 @@ def make_corner_plot_fiber_hits(
         s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in y_fiber_hits], 
         c = c
     )
-    axs[0,0].set_ylabel("z [mm]")
+    axs[0,0].set_ylabel(label[2])
     
     if colour_override is None:
         c = [cmap(ev.weight / charge_cutoff) for ev in z_fiber_hits]
@@ -214,8 +215,8 @@ def make_corner_plot_fiber_hits(
         s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in z_fiber_hits], 
         c = c
     )
-    axs[1,0].set_xlabel("x [mm]")
-    axs[1,0].set_ylabel("y [mm]")
+    axs[1,0].set_xlabel(label[0])
+    axs[1,0].set_ylabel(label[1])
 
     if colour_override is None:
         c = [cmap(ev.weight / charge_cutoff) for ev in x_fiber_hits]
@@ -226,7 +227,7 @@ def make_corner_plot_fiber_hits(
         s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in x_fiber_hits], 
         c = c
     )
-    axs[1,1].set_xlabel("z [mm]")
+    axs[1,1].set_xlabel(label[2])
     
     #fig.colorbar(mappable[3], location="right", ax=axs, label = "N Hits")
 
