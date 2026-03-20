@@ -545,6 +545,7 @@ neighbourhood.
             
             hit = fiber_hits[hit_id]
             charge = hit.weight
+            direction = {u: 0.0, v: 0.0}
 
             if charge < self._peak_candidate_weight_threshold:
                 continue
@@ -574,11 +575,19 @@ neighbourhood.
                 for h in local_peak_hits:
                     u_info_hits.append(h)
 
+                direction[v] = 1
+
             if np.sum(v_line_charges < modified_charge) >= 2:
                 is_peak = True
                 local_peak_hits = self._find_peak_hits(hit, extended_v_line_hits, v)
                 for h in local_peak_hits:
                     v_info_hits.append(h)
+
+                if direction[v] == 1:
+                    direction[u] = 0
+                    direction[v] = 0
+                else:
+                    direction[u] = 1
 
             ## If it's not already a peak, check if it's a diagonal peak
             if not is_peak:
@@ -593,6 +602,10 @@ neighbourhood.
 
                 if np.sum(diag_uv_line_charges < modified_charge) >= 2:
                     is_peak = True
+                    
+                    direction[u] = -1
+                    direction[v] = 1
+
                     local_peak_hits = self._find_peak_hits(hit, extended_diag_uv_line_hits, u)
                     for h in local_peak_hits:
                         u_info_hits.append(h)
@@ -604,9 +617,16 @@ neighbourhood.
                     for h in local_peak_hits:
                         u_info_hits.append(h)
                         v_info_hits.append(h)
+
+                    direction[u] = 1
+                    direction[v] = 1
                 
             if is_peak:
                 new_hit = Hit2D.copy(hit)
+
+                new_hit.set_is_peak({u: direction[v], v: direction[u]})
+
+                new_hit.set_direction(direction)
 
                 setattr(new_hit, u, Hit2D.get_mean_pos(u_info_hits, u))
                 setattr(new_hit, v, Hit2D.get_mean_pos(v_info_hits, v))
@@ -1024,7 +1044,16 @@ class HesseRidgeDetection2D(ModuleBase):
                 ## have already applied all our conditions when calculating ridgeness and don't fill it if it fails
                 ## so here we just need to check if it's not 0
                 if ridgeness[u_bin -1, v_bin -1] > 0.0:
+
                     peak_hits.append(hit)
+
+                    ## get the eigenvector corresponding to the smallest eigenvalue
+                    ## this will be the one that points along the "ridge"
+                    max_eval_id = np.argmax(hess_eigenvals[:, u_bin - 1, v_bin - 1])
+                    evec = hess_eigenvecs[:, max_eval_id, u_bin - 1, v_bin - 1]
+
+                    hit.set_direction({u_name: evec[0], v_name: evec[1]})
+                    hit.set_is_peak({u_name: True, v_name: True})
 
                 else:
                     unused_hits.add(hit)
@@ -1083,16 +1112,16 @@ class HesseRidgeDetection2D(ModuleBase):
             for dim1 in range(0, hess_eigenvecs.shape[-1]):
 
                 if ridgeness[dim0, dim1] > 0.0:
-                    max_eval_id = np.argmin(hess_eigenvals[:, dim0, dim1])
+                    max_eval_id = np.argmax(hess_eigenvals[:, dim0, dim1])
 
                     plt.plot(
                         (
-                            dim1 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
-                            dim1 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
+                            dim1 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
+                            dim1 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
                         ),
                         (
-                            dim0 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
-                            dim0 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
+                            dim0 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
+                            dim0 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
                         ), 
                         c = "r"
                     )

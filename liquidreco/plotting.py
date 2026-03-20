@@ -21,7 +21,10 @@ def make_corner_plot(
         marker=".",
         plot_cbar = True,
         include_fibers = False,
-        colour_override:str = None):
+        colour_override:str = None,
+        plot_directions: bool = False,
+        direction_line_length: float = 10.0
+    ):
 
     c= colour_override
 
@@ -29,6 +32,23 @@ def make_corner_plot(
         c = [cmap(ev.weight / charge_cutoff) for ev in hits]
     
     s = [0.1*(min(ev.weight,charge_cutoff) / charge_cutoff) for ev in hits]
+
+
+    if (plot_directions):
+        for hit in hits:
+            
+            x1 = hit.x
+            x2 = hit.x + direction_line_length * hit.dir_x if hit.dir_x is not None else hit.x
+
+            y1 = hit.y
+            y2 = hit.y + direction_line_length * hit.dir_y if hit.dir_y is not None else hit.y
+
+            z1 = hit.z
+            z2 = hit.z + direction_line_length * hit.dir_z if hit.dir_z is not None else hit.z
+    
+            axs[0,0].plot((x1, x2), (z1, z2), c = "g", linewidth = 0.4)
+            axs[1,0].plot((x1, x2), (y1, y2), c = "g", linewidth = 0.4)    
+            axs[1,1].plot((z1, z2), (y1, y2), c = "g", linewidth = 0.4)
 
     axs[0,0].scatter(
         [hit.x for hit in hits],
@@ -131,7 +151,9 @@ def make_corner_plot_fiber_hits(
         z_fiber_hits,
         charge_cutoff=100.0,
         cmap=plt.get_cmap("coolwarm"),
-        colour_override:str = None,
+        colour_override: str = None,
+        plot_directions: bool = False,
+        direction_line_length: float = 10.0
     ):
 
     c = colour_override
@@ -139,10 +161,46 @@ def make_corner_plot_fiber_hits(
     if colour_override is None:
         c = [cmap(ev.weight / charge_cutoff) for ev in y_fiber_hits]
 
+
+    if (plot_directions):
+        for hit in y_fiber_hits:
+            
+            x1 = hit.x
+            x2 = hit.x + direction_line_length * hit.dir_x if hit.dir_x is not None else hit.x
+
+            z1 = hit.z
+            z2 = hit.z + direction_line_length * hit.dir_z if hit.dir_z is not None else hit.z
+    
+            axs[0,0].plot((x1, x2), (z1, z2), c = "g", linewidth = 0.4)
+
+        
+        for hit in z_fiber_hits:
+            
+            x1 = hit.x
+            x2 = hit.x + direction_line_length * hit.dir_x if hit.dir_x is not None else hit.x
+
+            y1 = hit.y
+            y2 = hit.y + direction_line_length * hit.dir_y if hit.dir_y is not None else hit.y
+    
+            axs[1,0].plot((x1, x2), (y1, y2), c = "g", linewidth = 0.4)
+
+
+        for hit in x_fiber_hits:
+            
+            y1 = hit.y
+            y2 = hit.y + direction_line_length * hit.dir_y if hit.dir_y is not None else hit.y
+
+            z1 = hit.z
+            z2 = hit.z + direction_line_length * hit.dir_z if hit.dir_z is not None else hit.z
+    
+            axs[1,1].plot((z1, z2), (y1, y2), c = "g", linewidth = 0.4)
+            
+
+
     axs[0,0].scatter(
         [hit.x for hit in y_fiber_hits],
         [hit.z for hit in y_fiber_hits],
-        s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in y_fiber_hits], 
+        s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in y_fiber_hits], 
         c = c
     )
     axs[0,0].set_ylabel("z [mm]")
@@ -153,7 +211,7 @@ def make_corner_plot_fiber_hits(
     axs[1,0].scatter(
         [hit.x for hit in z_fiber_hits],
         [hit.y for hit in z_fiber_hits],
-        s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in z_fiber_hits], 
+        s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in z_fiber_hits], 
         c = c
     )
     axs[1,0].set_xlabel("x [mm]")
@@ -165,7 +223,7 @@ def make_corner_plot_fiber_hits(
     mappable = axs[1,1].scatter(
         [hit.z for hit in x_fiber_hits],
         [hit.y for hit in x_fiber_hits],
-        s = [0.1 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in x_fiber_hits], 
+        s = [0.4 * min(hit.weight, charge_cutoff) / charge_cutoff for hit in x_fiber_hits], 
         c = c
     )
     axs[1,1].set_xlabel("z [mm]")
