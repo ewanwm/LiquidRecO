@@ -545,6 +545,7 @@ neighbourhood.
             
             hit = fiber_hits[hit_id]
             charge = hit.weight
+            direction = {u: 0.0, v: 0.0}
 
             if charge < self._peak_candidate_weight_threshold:
                 continue
@@ -574,11 +575,19 @@ neighbourhood.
                 for h in local_peak_hits:
                     u_info_hits.append(h)
 
+                direction[v] = 1
+
             if np.sum(v_line_charges < modified_charge) >= 2:
                 is_peak = True
                 local_peak_hits = self._find_peak_hits(hit, extended_v_line_hits, v)
                 for h in local_peak_hits:
                     v_info_hits.append(h)
+
+                if direction[v] == 1:
+                    direction[u] = 0
+                    direction[v] = 0
+                else:
+                    direction[u] = 1
 
             ## If it's not already a peak, check if it's a diagonal peak
             if not is_peak:
@@ -593,6 +602,10 @@ neighbourhood.
 
                 if np.sum(diag_uv_line_charges < modified_charge) >= 2:
                     is_peak = True
+                    
+                    direction[u] = -1
+                    direction[v] = 1
+
                     local_peak_hits = self._find_peak_hits(hit, extended_diag_uv_line_hits, u)
                     for h in local_peak_hits:
                         u_info_hits.append(h)
@@ -604,9 +617,13 @@ neighbourhood.
                     for h in local_peak_hits:
                         u_info_hits.append(h)
                         v_info_hits.append(h)
+
+                    direction[u] = 1
+                    direction[v] = 1
                 
             if is_peak:
                 new_hit = Hit2D.copy(hit)
+                new_hit.set_direction(direction)
 
                 setattr(new_hit, u, Hit2D.get_mean_pos(u_info_hits, u))
                 setattr(new_hit, v, Hit2D.get_mean_pos(v_info_hits, v))
