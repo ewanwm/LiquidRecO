@@ -1,16 +1,18 @@
 import typing
+from typing import Any
+
 import numpy as np
 
 ## alias for all things we accept as a 3-vector
-Vector3 = typing.Union[typing.Tuple[float], typing.List[float], typing.Dict[str, float]]
+Vector3 = typing.Union[typing.Tuple[Any], typing.List[Any], typing.Dict[str, Any]]
 
-def tuple_from_maybe_dict(vec: Vector3) -> typing.Tuple[float]:
+def tuple_from_maybe_dict(vec: Vector3) -> typing.Tuple[Any]:
     """Geta tuple representing a 3 vector from input that could be iterable or could be dict of form {"x": *, "y": *, "z": *}
 
     :param vec: The variable to extract 3 vector from
-    :type vec: typing.Tuple[float] | typing.List[float] | typing.Dict[str, float]
+    :type vec: typing.Tuple[Any] | typing.List[Any] | typing.Dict[str, Any]
     :return: 3-tuple representing 3 vector
-    :rtype: typing.Tuple[float]
+    :rtype: typing.Tuple[Any]
     """
 
     ret = None
@@ -53,7 +55,8 @@ class Hit:
         position = (None, None, None),
         time = None,
         weight = None,
-        direction = (None, None, None)
+        direction = (None, None, None),
+        is_peak = (False, False, False)
     ):
         
         self.pos = position
@@ -74,20 +77,39 @@ class Hit:
         """y position of the hit"""
         self.dir_z = None
         """z position of the hit"""
+        self.is_x_peak = None
+        """is a peak in x direction"""
+        self.is_y_peak = None
+        """is a peak in the y direction"""
+        self.is_z_peak = None
         ## set with function so properly normalises (also sets dir_* variables)
+        self.set_is_peak(is_peak)
+        """Whether or not this hit is a peak hit"""
         self.set_direction(direction) 
         """the direction of the hit. e.g. the direction along the ridge for a peak hit"""
 
-    def set_position(self, new_pos: typing.Tuple[float]) -> None:
+    def set_is_peak(self, new_is_peak: Vector3) -> None:
+        """Set info about peakness of the hit
+        
+        :param new_is_peak: New position (must have length 3)
+        :type new_is_peak: typing.Tuple[bool]
+        """
+
+        self.is_peak = tuple_from_maybe_dict(new_is_peak)
+
+        self.is_x_peak = self.is_peak[0]
+        self.is_y_peak = self.is_peak[1]
+        self.is_z_peak = self.is_peak[2]
+
+    def set_position(self, new_pos: Vector3) -> None:
         """Set a new position for this hit
 
         :param new_pos: New position (must have length 3)
         :type new_pos: typing.Tuple[float]
         """
 
-        assert len(new_pos) == 3, "Position must be 3-tuple!!!"
+        self.pos = tuple_from_maybe_dict(new_pos)
 
-        self.pos = new_pos
         self.x = self.pos[0]
         self.y = self.pos[1]
         self.z = self.pos[2]
@@ -112,12 +134,14 @@ class Hit:
         mag = np.sqrt(accum)
 
         x, y, z = None, None, None
-        if unnormed[0] is not None:
-            x = unnormed[0] / mag
-        if unnormed[1] is not None:
-            y = unnormed[1] / mag
-        if unnormed[2] is not None:
-            z = unnormed[2] / mag
+        
+        if mag != 0.0:
+            if unnormed[0] is not None:
+                x = unnormed[0] / mag
+            if unnormed[1] is not None:
+                y = unnormed[1] / mag
+            if unnormed[2] is not None:
+                z = unnormed[2] / mag
 
         ## set members
         self.dir = (x, y, z)
@@ -125,6 +149,24 @@ class Hit:
         self.dir_y = self.dir[1]
         self.dir_z = self.dir[2]
 
+    def is_peak(self, direction:str = None) -> bool:
+        """Checks if this hit is considered
+         
+        Can specify a direction to check if it is a peak in a particular direction i.e. more position info than just the fiber position
+
+        :param direction: Check if the hit is a peak in a specific direction, defaults to None
+        :type direction: str
+        :return: True if this hit is a peak hit 
+        :rtype: bool
+        """
+
+        if direction is None:
+            return self.is_x_peak or self.is_y_peak or self.is_z_peak
+        
+        else:
+            ## Just check if the fiber has a direction defined along the given axis
+            return getattr(self, f"is_{direction}_peak")
+        
     def __str__(self) -> str:
         """Summarise this hit as a string
 
@@ -158,6 +200,8 @@ class Hit2D(Hit):
             new_hit.weight = float(old_hit.weight)
         if old_hit.secondary_hits is not []:
             new_hit.secondary_hits = list(old_hit.secondary_hits)
+
+        new_hit.is_peak = old_hit.is_peak
 
         return new_hit
 
@@ -193,10 +237,11 @@ class Hit2D(Hit):
         secondary_hits = None
     ):
         
-        self.fiber_pos = fiber_pos
-        self.fiber_x = self.fiber_pos[0]
-        self.fiber_y = self.fiber_pos[1]
-        self.fiber_z = self.fiber_pos[2]
+        self.fiber_x = None
+        self.fiber_y = None
+        self.fiber_z = None
+
+        self.set_fiber_position(fiber_pos)
         
         super().__init__(pos, time, weight)
 
@@ -244,19 +289,6 @@ class Hit2D(Hit):
         
         else:
             return self.weight
-        
-    def is_peak(self, direction:str) -> bool:
-        """Checks if this hit is considered a peak in a particular direction i.e. more position info than just the fiber position
-
-        :param direction: The direction to test
-        :type direction: str
-        :return: True if this hit has peak info in the specified direction. 
-        :rtype: bool
-        """
-
-        ## Just check if the fiber has a direction defined along the given axis
-        dir = getattr(self, "dir_" + direction)
-        return (dir is not None) and (dir != 0.0)
 
 class Hit3D(Hit):
     """Describes a 3D hit constructed from two or three WLS fibers"""

@@ -623,6 +623,9 @@ neighbourhood.
                 
             if is_peak:
                 new_hit = Hit2D.copy(hit)
+
+                new_hit.set_is_peak({u: direction[v], v: direction[u]})
+
                 new_hit.set_direction(direction)
 
                 setattr(new_hit, u, Hit2D.get_mean_pos(u_info_hits, u))
@@ -1041,7 +1044,16 @@ class HesseRidgeDetection2D(ModuleBase):
                 ## have already applied all our conditions when calculating ridgeness and don't fill it if it fails
                 ## so here we just need to check if it's not 0
                 if ridgeness[u_bin -1, v_bin -1] > 0.0:
+
                     peak_hits.append(hit)
+
+                    ## get the eigenvector corresponding to the smallest eigenvalue
+                    ## this will be the one that points along the "ridge"
+                    max_eval_id = np.argmax(hess_eigenvals[:, u_bin - 1, v_bin - 1])
+                    evec = hess_eigenvecs[:, max_eval_id, u_bin - 1, v_bin - 1]
+
+                    hit.set_direction({u_name: evec[0], v_name: evec[1]})
+                    hit.set_is_peak({u_name: True, v_name: True})
 
                 else:
                     unused_hits.add(hit)
@@ -1100,16 +1112,16 @@ class HesseRidgeDetection2D(ModuleBase):
             for dim1 in range(0, hess_eigenvecs.shape[-1]):
 
                 if ridgeness[dim0, dim1] > 0.0:
-                    max_eval_id = np.argmin(hess_eigenvals[:, dim0, dim1])
+                    max_eval_id = np.argmax(hess_eigenvals[:, dim0, dim1])
 
                     plt.plot(
                         (
-                            dim1 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
-                            dim1 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
+                            dim1 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
+                            dim1 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
                         ),
                         (
-                            dim0 + 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1],
-                            dim0 - 0.5 * hess_eigenvecs[1, max_eval_id, dim0, dim1]
+                            dim0 - 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1],
+                            dim0 + 0.5 * hess_eigenvecs[0, max_eval_id, dim0, dim1]
                         ), 
                         c = "r"
                     )
