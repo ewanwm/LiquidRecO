@@ -119,13 +119,19 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#plotting">Plotting</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">HitBuilder2D</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.configuration.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._add_module_subparsers"><code class="docutils literal notranslate"><span class="pre">Configuration._add_module_subparsers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_cl_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_cl_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_json_config"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_json_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_fit_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_fit_parser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_make_config_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_make_config_parser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.parse_args"><code class="docutils literal notranslate"><span class="pre">Configuration.parse_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.to_json"><code class="docutils literal notranslate"><span class="pre">Configuration.to_json()</span></code></a></li>
 </ul>
@@ -134,12 +140,13 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#event-processor">Event Processor</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor"><code class="docutils literal notranslate"><span class="pre">EventProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor._read_hit_info"><code class="docutils literal notranslate"><span class="pre">EventProcessor._read_hit_info()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.event_processor.EventProcessor.event_loop"><code class="docutils literal notranslate"><span class="pre">EventProcessor.event_loop()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id8">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">Plotting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
 </ul>
@@ -477,6 +484,91 @@ Any outputs should be given by name in the <cite>outputs</cite> member variable.
 <li><p>_help() - OPTIONAL</p></li>
 </ul>
 <dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._check_outputs">
+<span class="sig-name descname"><span class="pre">_check_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._check_outputs" title="Link to this definition"></a></dt>
+<dd><p>Checks that the event has all the specified outputs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – the event to check</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the event doesn’t have the promised outputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._check_requirements">
+<span class="sig-name descname"><span class="pre">_check_requirements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._check_requirements" title="Link to this definition"></a></dt>
+<dd><p>Checks that the event has all the required inputs for this module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – the event to check</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the event doesn’t have the required inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._help">
+<span class="sig-name descname"><span class="pre">_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._help" title="Link to this definition"></a></dt>
+<dd><p>Should return a help string that will be printed to the command line for this module</p>
+<p>Default behaviour is to use the class docstring of the module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>helpful message about your module</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._process">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._process" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArgumentParser</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.modules.module_base.ModuleBase.finalise">
 <span class="sig-name descname"><span class="pre">finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.module_base.ModuleBase.finalise" title="Link to this definition"></a></dt>
 <dd><p>Tear down the module</p>
@@ -574,12 +666,84 @@ arguments, so this should be called before the module is called on any events.</
 <dd><p>Absolute base level module to build 2D hits from raw hit information</p>
 <p>The starting point for any good reconstruction chain.
 Takes in raw hit info and turns it into more structiured hits.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder2D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder2D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder2D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder2D._process" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder2D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder2D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder3D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder3D" title="Link to this definition"></a></dt>
 <dd><p>Makes 3D hits from 2d fiber hits</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder3D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder3D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder3D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder3D._process" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder3D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder3D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div></blockquote>
@@ -591,24 +755,469 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection2D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D" title="Link to this definition"></a></dt>
 <dd><p>Performs “ridge detection” using the Hessian of a 2D image of the detector</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._compute_ridgeness">
+<span class="sig-name descname"><span class="pre">_compute_ridgeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._compute_ridgeness" title="Link to this definition"></a></dt>
+<dd><p>Compute the “ridgeness” score for each pixel in an input image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – The 2D input image</p></li>
+<li><p><strong>hess_eigenvals</strong> (<em>np.array</em>) – The eigenvalues of the hessian for the image (computed using the <cite>_hess_eigen()</cite> method)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The 2D array of ridgeness scores</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._gradient">
+<span class="sig-name descname"><span class="pre">_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._gradient" title="Link to this definition"></a></dt>
+<dd><p>Calculate the gradient of an input image using central finite difference</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – Histogram you want the gradient of</p></li>
+<li><p><strong>normalise</strong> (<em>bool</em>) – Do per-bin normalisation to the cantral value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>arrays du and dv containing derivatives wrt u and v</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._hess_eigen">
+<span class="sig-name descname"><span class="pre">_hess_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._hess_eigen" title="Link to this definition"></a></dt>
+<dd><p>Get the eigenvalues and vectors of the hessian matrix of an input image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hist</strong> (<em>np.array</em>) – The input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Hessian eigenvalues and eigenvectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._hessian">
+<span class="sig-name descname"><span class="pre">_hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._hessian" title="Link to this definition"></a></dt>
+<dd><p>Calculate the hessian matrix of an input image using central finite difference</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – Histogram you want the hessian of</p></li>
+<li><p><strong>normalise</strong> (<em>bool</em>) – Do per-bin normalisation to the cantral value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>arrays huu, hvv, huv, hvu containing each of the necessary double derivatives</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_debug_plots">
+<span class="sig-name descname"><span class="pre">_make_debug_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_debug_plots" title="Link to this definition"></a></dt>
+<dd><p>Make detailed plots of values used in the Hesse ridge detection algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – The input image</p></li>
+<li><p><strong>u_name</strong> (<em>str</em>) – The label of the u direction (“x”, “y” or “z”)</p></li>
+<li><p><strong>v_name</strong> (<em>str</em>) – The label of the v direction (“x”, “y” or “z”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_plot">
+<span class="sig-name descname"><span class="pre">_make_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ridgeness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_plot" title="Link to this definition"></a></dt>
+<dd><p>Make plot of the ridgeness score of each pixel (fiber) with direction of the detected ridges overlaid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ridgeness</strong> (<em>np.array</em>) – The 2D array defining the ridgeness score for each pixel</p></li>
+<li><p><strong>hess_eigenvals</strong> (<em>np.array</em>) – The 3D array of the eigenvalues of the hessian at each pixel</p></li>
+<li><p><strong>hess_eigenvecs</strong> (<em>np.array</em>) – The 3D array of the eigenvectors of the hessian at each pixel</p></li>
+<li><p><strong>u_name</strong> (<em>str</em>) – The label of the u direction (“x”, “y” or “z”)</p></li>
+<li><p><strong>v_name</strong> (<em>str</em>) – The label of the v direction (“x”, “y” or “z”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._process" title="Link to this definition"></a></dt>
+<dd><p>Perform Hough transform on an event and save the result to a given file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – Object describing the hits in an event</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">HesseRidgeDetection3D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D" title="Link to this definition"></a></dt>
 <dd><p>Performs “ridge detection” using the Hessian of a 3D image of the detector</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._compute_ridgeness">
+<span class="sig-name descname"><span class="pre">_compute_ridgeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._compute_ridgeness" title="Link to this definition"></a></dt>
+<dd><p>Compute the “ridgeness” score for each pixel in an input image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – The 2D input image</p></li>
+<li><p><strong>hess_eigenvals</strong> (<em>np.array</em>) – The eigenvalues of the hessian for the image (computed using the <cite>_hess_eigen()</cite> method)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The 2D array of ridgeness scores</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._gradient">
+<span class="sig-name descname"><span class="pre">_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._gradient" title="Link to this definition"></a></dt>
+<dd><p>Calculate the gradient of an input image using central finite difference</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – Histogram you want the gradient of</p></li>
+<li><p><strong>normalise</strong> (<em>bool</em>) – Do per-bin normalisation to the cantral value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>arrays du and dv containing derivatives wrt u and v</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._hess_eigen">
+<span class="sig-name descname"><span class="pre">_hess_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._hess_eigen" title="Link to this definition"></a></dt>
+<dd><p>Get the eigenvalues and vectors of the hessian matrix of an input image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hist</strong> (<em>np.array</em>) – The input image</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Hessian eigenvalues and eigenvectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._hessian">
+<span class="sig-name descname"><span class="pre">_hessian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._hessian" title="Link to this definition"></a></dt>
+<dd><p>Calculate the hessian matrix of an input image using central finite difference</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – Histogram you want the hessian of</p></li>
+<li><p><strong>normalise</strong> (<em>bool</em>) – Do per-bin normalisation to the cantral value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>arrays huu, hvv, huv, hvu containing each of the necessary double derivatives</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[np.array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._process" title="Link to this definition"></a></dt>
+<dd><p>Perform Hough transform on an event and save the result to a given file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – Object describing the hits in an event</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection3D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection3D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.LaplaceFitter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">LaplaceFitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighbourhood_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">45.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_candidate_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_n_neighbours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.LaplaceFitter" title="Link to this definition"></a></dt>
 <dd><p>Performs a fit of an ensemble of laplace distributions to observed collected charges in fibers in order to try to determine which</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.LaplaceFitter._fit_laplace">
+<span class="sig-name descname"><span class="pre">_fit_laplace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.LaplaceFitter._fit_laplace" title="Link to this definition"></a></dt>
+<dd><p>Performs the fit of the laplace distributions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hits</strong> (<em>List</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits that should be considered in the fit</p></li>
+<li><p><strong>peak_candidates</strong> (<em>List</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits that should be considered peak candidates</p></li>
+<li><p><strong>u</strong> (<em>str</em>) – The u direction, should be “x”, “y” or “z”</p></li>
+<li><p><strong>v</strong> (<em>str</em>) – The v direction, should be “x”, “y” or “z”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The fitted laplace amplitudes of all peak candidate fibers</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.LaplaceFitter._get_laplace_fn">
+<span class="sig-name descname"><span class="pre">_get_laplace_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fiber_positions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_charges</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbour_distances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbour_indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">array</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.LaplaceFitter._get_laplace_fn" title="Link to this definition"></a></dt>
+<dd><p>Construct the ensemble of laplace functions used for fitting</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fiber_positions</strong> (<em>np.ndarray</em>) – Positions of all of the fibers included in the fit</p></li>
+<li><p><strong>fiber_charges</strong> (<em>np.ndarray</em>) – Measured charges for all fibers included in the fit</p></li>
+<li><p><strong>neighbour_distances</strong> (<em>np.array</em>) – The distances from all fibers to the peak candidates</p></li>
+<li><p><strong>neighbour_indices</strong> (<em>np.array</em>) – The indices indicating which peak candidate fibers contribute to the light in each fiber</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Function that predicts charges in fibers, can then be used in fit.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Callable</em></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.peak_finding.</span></span><span class="sig-name descname"><span class="pre">PeakFinder2D</span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D" title="Link to this definition"></a></dt>
 <dd><p>Finds peaks in raw fiber hits and performs position corrections</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._cluster_hits">
+<span class="sig-name descname"><span class="pre">_cluster_hits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fiber_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._cluster_hits" title="Link to this definition"></a></dt>
+<dd><p>Cluster hits using this PeakFinder2Ds _clusterer (default is DBSCAN but you can set it to whatever you want)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fiber_hits</strong> (<em>List</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits to cluster</p></li>
+<li><p><strong>u</strong> (<em>str</em>) – the “u” direction, should be ‘x’, ‘y’ or ‘z’ depending on the projection</p></li>
+<li><p><strong>v</strong> (<em>str</em>) – the “v” direction, should be ‘x’, ‘y’ or ‘z’ depending on the projection</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>hits broken down into clusters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<em>List</em>[‘Hit2D’]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._finalise" title="Link to this definition"></a></dt>
+<dd><p>Tidy up and close open pdfs</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._find_peak_hits">
+<span class="sig-name descname"><span class="pre">_find_peak_hits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_hit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_hits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._find_peak_hits" title="Link to this definition"></a></dt>
+<dd><p>Finds hits in a list whose charges are monotonically decreasing relative to some central hit</p>
+<p>e.g. running on</p>
+<blockquote>
+<div><blockquote>
+<div><p>↓       ____</p>
+</div></blockquote>
+<p>___     /                /   ___/              ___/                </p>
+</div></blockquote>
+<p>where the arrow indicates the “main hit”
+would give</p>
+<blockquote>
+<div><blockquote>
+<div><p>___</p>
+</div></blockquote>
+<p>/   __</p>
+</div></blockquote>
+<p>___/</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>main_hit</strong> (<a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a>) – The central hit that defines the summit of the peak</p></li>
+<li><p><strong>line_hits</strong> (<em>list</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits to be searched (should include the main hit)</p></li>
+<li><p><strong>direction</strong> (<em>str</em>) – The direction along the “line” of hits, should be “x”, “y” or “z”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of hits that belong to the same peak as the main hit</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[‘Hit2D’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._get_diagonal_neighbours">
+<span class="sig-name descname"><span class="pre">_get_diagonal_neighbours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbourhood</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_pitch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_pitch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagonal_sign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><span class="pre">Hit2D</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._get_diagonal_neighbours" title="Link to this definition"></a></dt>
+<dd><p>Gets neighbours of a hit along a diagonal line</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hit</strong> (<a class="reference internal" href="#liquidreco.hit.Hit2D" title="liquidreco.hit.Hit2D"><em>Hit2D</em></a>) – The main hit</p></li>
+<li><p><strong>neighbourhood</strong> (<em>List</em><em>[</em><em>'Hit2D'</em><em>]</em>) – The hits to search for diagonal neighbours in</p></li>
+<li><p><strong>u</strong> (<em>str</em>) – the u direction, should be either “x”, “y” or “z”</p></li>
+<li><p><strong>v</strong> (<em>str</em>) – the v direction, should be either “x”, “y” or “z”</p></li>
+<li><p><strong>u_pitch</strong> (<em>float</em>) – fiber pitch in the u direction</p></li>
+<li><p><strong>v_pitch</strong> (<em>float</em>) – fiber pitch in the v direction</p></li>
+<li><p><strong>diagonal_sign</strong> (<em>int</em><em>, </em><em>optional</em>) – The gradient of the diagonal, defaults to +1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Hits from the neighbourhood that lie along the specified diagonal</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[‘Hit2D’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._help">
+<span class="sig-name descname"><span class="pre">_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._help" title="Link to this definition"></a></dt>
+<dd><p>Should return a help string that will be printed to the command line for this module</p>
+<p>Default behaviour is to use the class docstring of the module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>helpful message about your module</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._process" title="Link to this definition"></a></dt>
+<dd><p>Perform the peak finding</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>peak hits in each projection</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[‘Hit2D’]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.PeakFinder2D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.PeakFinder2D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div></blockquote>
@@ -621,12 +1230,71 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 <dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform</span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform" title="Link to this definition"></a></dt>
 <dd><p>Performs simple Hough line transform</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._process" title="Link to this definition"></a></dt>
+<dd><p>Perform Hough transform on an event and save the result to a given file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – Object describing the hits in an event</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.modules.reconstruction.LocalMeanDBSCAN">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">LocalMeanDBSCAN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_ball_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbscan_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_charge_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.LocalMeanDBSCAN._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.LocalMeanDBSCAN._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN._process" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 </div></blockquote>
 </section>
@@ -636,7 +1304,58 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 <div><dl class="py class" id="module-liquidreco.modules.utility">
 <dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.utility.</span></span><span class="sig-name descname"><span class="pre">WeightScaling</span></span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling._help">
+<span class="sig-name descname"><span class="pre">_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling._help" title="Link to this definition"></a></dt>
+<dd><p>Should return a help string that will be printed to the command line for this module</p>
+<p>Default behaviour is to use the class docstring of the module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>helpful message about your module</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling._process" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.utility.WeightScaling._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArgumentParser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.utility.WeightScaling._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 </div></blockquote>
 </section>
@@ -649,12 +1368,84 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 <dd><p>Absolute base level module to build 2D hits from raw hit information</p>
 <p>The starting point for any good reconstruction chain.
 Takes in raw hit info and turns it into more structiured hits.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#id8" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="id7">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id10">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
 <dd><p>Makes 3D hits from 2d fiber hits</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
+<dd><p>This method should be implemented by any modules you write.
+Should process a single event and add any results to the event object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – event to be processed</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id13" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div></blockquote>
@@ -671,6 +1462,67 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 parse_args(sys.argv[1:]). Then specified modules are available in the 
 <cite>modules</cite> attribute and base config arguments like input file, output
 file etc. are available in the <cite>base_args</cite> attribute.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._add_module_subparsers">
+<span class="sig-name descname"><span class="pre">_add_module_subparsers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ArgumentParser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.configuration.Configuration._add_module_subparsers" title="Link to this definition"></a></dt>
+<dd><p>add subparsers for each registered module</p>
+<p>these won’t actually be used when parsing but allow printing nice unified
+help message with all available modules listed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The parser to add modules to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_cl_args">
+<span class="sig-name descname"><span class="pre">_parse_cl_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_cl_args" title="Link to this definition"></a></dt>
+<dd><p>Parse command line arguments</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of strings from command line (should use sys.argv[1:])</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If a module you are asking for is not recognised</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_json_config">
+<span class="sig-name descname"><span class="pre">_parse_json_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_json_config" title="Link to this definition"></a></dt>
+<dd><p>Parse a json config file</p>
+<p>This will overwrite the <cite>args</cite> member variable, effectively ignoring any
+previously specified module settings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_file</strong> (<em>str</em>) – The file to read the config from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._setup_fit_parser">
+<span class="sig-name descname"><span class="pre">_setup_fit_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_fit_parser" title="Link to this definition"></a></dt>
+<dd><p>Set up the parser that deals with arguments for the “fit” command</p>
+<p>Will set the _fit_parser member variable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._setup_make_config_parser">
+<span class="sig-name descname"><span class="pre">_setup_make_config_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_make_config_parser" title="Link to this definition"></a></dt>
+<dd><p>Set up the parser that deals with arguments for the “make-config” command</p>
+<p>Will set the _make_config_parser member variable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._setup_parser">
+<span class="sig-name descname"><span class="pre">_setup_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_parser" title="Link to this definition"></a></dt>
+<dd><p>Set up the base argument parser - the one that deals with everything that isn’t
+some module specific parameter</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.configuration.Configuration.parse_args">
 <span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration.parse_args" title="Link to this definition"></a></dt>
@@ -712,6 +1564,12 @@ arguments specified by a user</p>
 <p>This is responsible for loading up events from the input file and
 looping over them, applying fit modules specified by the user.</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.event_processor.EventProcessor._read_hit_info">
+<span class="sig-name descname"><span class="pre">_read_hit_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor._read_hit_info" title="Link to this definition"></a></dt>
+<dd><p>load up the input root file and read event info from it</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.event_processor.EventProcessor.event_loop">
 <span class="sig-name descname"><span class="pre">event_loop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.event_processor.EventProcessor.event_loop" title="Link to this definition"></a></dt>
 <dd><p>Does the loop over all events, applying each specified module to them</p>
@@ -721,8 +1579,8 @@ looping over them, applying fit modules specified by the user.</p>
 
 </div></blockquote>
 </section>
-<section id="id8">
-<h2>Plotting<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
+<section id="id14">
+<h2>Plotting<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
 <blockquote>
 <div></div></blockquote>
 </section>
