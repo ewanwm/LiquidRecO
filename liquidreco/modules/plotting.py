@@ -29,11 +29,17 @@ class HitPlotter2D(ModuleBase):
             help="Will cap charges at this value for the purpose of plotting",
             default=100.0, required=False, type=float
         )
+        parser.add_argument(
+            "--show-directions",
+            help="show hit direction on plots for peak hits",
+            action='store_true'
+        )
 
     def _initialise(self):
         
         self._fibers_pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.file_name)
         self.charge_cutoff = self.args.charge_cutoff
+        self._show_directions = self.args.show_directions
 
     def _finalise(self):
           
@@ -50,7 +56,8 @@ class HitPlotter2D(ModuleBase):
             event["x_fiber_hits"],
             event["y_fiber_hits"],
             event["z_fiber_hits"],
-            charge_cutoff=self.charge_cutoff
+            charge_cutoff=self.charge_cutoff,
+            plot_directions=self._show_directions
         )
 
         self._fibers_pdf.savefig(fig)
@@ -83,23 +90,29 @@ but can be configured to also plot fully 3D events."""
         parser.add_argument(
             "--make-3d-plots",
             help="Whether to make 3D plots of the hits",
-            default=False, required=False, type=bool
+            action='store_true'
         )
         parser.add_argument(
             "--make-gifs",
             help="Whether to make animated gifs of hits",
-            default=False, required=False, type=bool
+            action='store_true'
         )
         parser.add_argument(
             "--charge-cutoff",
             help="Will cap charges at this value for the purpose of plotting",
             default=100.0, required=False, type=float
         )
+        parser.add_argument(
+            "--show-directions",
+            help="show hit direction on plots for peak hits",
+            action='store_true'
+        )
 
     def _initialise(self):
         
         self.charge_cutoff = self.args.charge_cutoff
         self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.file_name)
+        self._show_directions = self.args.show_directions
 
     def _finalise(self):
         
@@ -113,7 +126,13 @@ but can be configured to also plot fully 3D events."""
 
         fig, axs = plt.subplots(2, 2, sharex='col', sharey='row', figsize=(5, 5))
         fig.suptitle("Homo-FGD 3D Hits")
-        make_corner_plot(fig, axs, event_3d_hits, charge_cutoff=self.charge_cutoff)
+        make_corner_plot(
+            fig, 
+            axs, 
+            event_3d_hits, 
+            charge_cutoff=self.charge_cutoff,
+            plot_directions=self._show_directions
+        )
 
         self._pdf.savefig(fig)
 
