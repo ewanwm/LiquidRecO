@@ -817,12 +817,12 @@ class HesseRidgeDetection2D(ModuleBase):
         parser.add_argument(
             "--min-charge", 
             help="The minimum charge that a hit must have to be considered a peak hit", 
-            required = False, default = 80.0, type = float,
+            required = False, default = 50.0, type = float,
         )
         parser.add_argument(
             "--max-positive-curvature", 
             help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
-            required = False, default = 50.0, type = float,
+            required = False, default = 100.0, type = float,
         )
         parser.add_argument(
             "--min-negative-curvature", 
@@ -1218,17 +1218,17 @@ class HesseRidgeDetection3D(ModuleBase):
         parser.add_argument(
             "--min-charge", 
             help="The minimum charge that a hit must have to be considered a peak hit", 
-            required = False, default = 80.0, type = float,
+            required = False, default = 50.0, type = float,
         )
         parser.add_argument(
             "--max-positive-curvature", 
             help="The maximum local positive curvature that is allowed in the neighbourhood of a hit for it to be considered a peak. If this is 0.0 then only strict local maximum points may be peaks, the larger it is, the more extreme 'sadle points' are allowed", 
-            required = False, default = 50.0, type = float,
+            required = False, default = 100.0, type = float,
         )
         parser.add_argument(
             "--min-negative-curvature", 
             help="The minimum negative or 'downwards' curvature that is required in the neighbourhood of a hit for it to be considered a peak. The closer this is to 0.0, the more shallow peaks are allowed, the higher it is, the sharper the peaks must be", 
-            required = False, default = 40.0, type = float,
+            required = False, default = 50.0, type = float,
         )
         parser.add_argument(
             "--make-plots", 
@@ -1419,6 +1419,13 @@ class HesseRidgeDetection3D(ModuleBase):
             ## so here we just need to check if it's not 0
             if ridgeness[u_bin -1, v_bin -1, w_bin - 1] > 0.0:
                 peak_hits.append(hit)
+
+                ## get the eigenvector corresponding to the smallest eigenvalue
+                ## this will be the one that points along the "ridge"
+                max_eval_id = np.argmax(hess_eigenvals[:, u_bin - 1, v_bin - 1, w_bin - 1])
+                evec = hess_eigenvecs[:, max_eval_id, u_bin - 1, v_bin - 1, w_bin - 1]
+
+                hit.set_direction({"x": evec[0], "y": evec[1], "z": evec[2]})
 
             else:
                 unused.add(hit)
