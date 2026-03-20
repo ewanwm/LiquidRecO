@@ -83,12 +83,16 @@ class HitBuilder2D(ModuleBase):
         for x_id in range(len(x_positions)):
             x_fiber_hits.append(
                 Hit2D(
-                    x = None, 
-                    y = x_positions[x_id, 0], 
-                    z = x_positions[x_id, 1], 
-                    fiber_x = None, 
-                    fiber_y = x_positions[x_id, 0], 
-                    fiber_z = x_positions[x_id, 1], 
+                    pos = (
+                        None, 
+                        x_positions[x_id, 0], 
+                        x_positions[x_id, 1]
+                    ),
+                    fiber_pos = (
+                        None, 
+                        x_positions[x_id, 0], 
+                        x_positions[x_id, 1]
+                    ),
                     time = x_times[x_id], 
                     weight = x_weights[x_id]
                 )
@@ -97,12 +101,16 @@ class HitBuilder2D(ModuleBase):
         for y_id in range(len(y_positions)):
             y_fiber_hits.append(
                 Hit2D(
-                    x = y_positions[y_id, 0], 
-                    y = None, 
-                    z = y_positions[y_id, 1], 
-                    fiber_x = y_positions[y_id, 0], 
-                    fiber_y = None, 
-                    fiber_z = y_positions[y_id, 1], 
+                    pos = (
+                        y_positions[y_id, 0], 
+                        None, 
+                        y_positions[y_id, 1]
+                    ),
+                    fiber_pos = (
+                        y_positions[y_id, 0], 
+                        None, 
+                        y_positions[y_id, 1]
+                    ),
                     time = y_times[y_id], 
                     weight = y_weights[y_id]
                 )
@@ -111,12 +119,16 @@ class HitBuilder2D(ModuleBase):
         for z_id in range(len(z_positions)):
             z_fiber_hits.append(
                 Hit2D(
-                    x = z_positions[z_id, 0], 
-                    y = z_positions[z_id, 1], 
-                    z = None, 
-                    fiber_x = z_positions[z_id, 0], 
-                    fiber_y = z_positions[z_id, 1], 
-                    fiber_z = None, 
+                    pos = (
+                        z_positions[z_id, 0], 
+                        z_positions[z_id, 1], 
+                        None
+                    ), 
+                    fiber_pos = (
+                        z_positions[z_id, 0], 
+                        z_positions[z_id, 1], 
+                        None
+                    ), 
                     time = z_times[z_id], 
                     weight = z_weights[z_id]
                 )
@@ -168,6 +180,11 @@ class HitBuilder3D(ModuleBase):
             help="The maximum 'real' i.e. peak weighted discance between 2D hits in order for them to be considered for combining into a 3D hit. Specified as a fraction of fiber pitch", 
             required = False, default = None, type = float
         )
+        parser.add_argument(
+            "--max-dir-diff", 
+            help="The maximum difference in the shared direction component of two 2D hits for them to be allowed to be combined into a 3D hit", 
+            required = False, default = None, type = float
+        )
 
     def _initialise(self):
         
@@ -176,6 +193,7 @@ class HitBuilder3D(ModuleBase):
         self.min_2d_hit_weight: float = self.args.min_2d_hit_weight
         self.n_required_peaks: int = self.args.n_required_peaks
         self.max_weighted_distance: float = self.args.max_weighted_distance
+        self.max_dir_diff: float = self.args.max_dir_diff
 
     def _process(self, event: Event) -> None:
         
@@ -219,6 +237,12 @@ class HitBuilder3D(ModuleBase):
                     if (
                         abs( y_hit.z - x_hit.z) > self.pitch[2] * self.max_weighted_distance
                     ): 
+                        continue
+
+                if self.max_dir_diff is not None:
+                    if (
+                        abs( abs(y_hit.dir_z) - abs(x_hit.dir_z) ) > self.max_dir_diff
+                    ):
                         continue
 
                 if (
@@ -270,6 +294,13 @@ class HitBuilder3D(ModuleBase):
                         abs( z_hit.x - two_fiber_hit.x) > self.pitch[0] * self.max_weighted_distance or
                         abs( z_hit.y - two_fiber_hit.y) > self.pitch[1] * self.max_weighted_distance
                     ): 
+                        continue
+
+                if self.max_dir_diff is not None:
+                    if (
+                        abs( abs(z_hit.dir_x) - abs(two_fiber_hit.y_fiber_hit.dir_x) ) > self.max_dir_diff or
+                        abs( abs(z_hit.dir_y) - abs(two_fiber_hit.x_fiber_hit.dir_y) ) > self.max_dir_diff
+                    ):
                         continue
                 
                 if (

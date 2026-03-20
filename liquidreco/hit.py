@@ -1,31 +1,129 @@
 import typing
 import numpy as np
-from scipy import ndimage
-import math as m
 
+## alias for all things we accept as a 3-vector
+Vector3 = typing.Union[typing.Tuple[float], typing.List[float], typing.Dict[str, float]]
+
+def tuple_from_maybe_dict(vec: Vector3) -> typing.Tuple[float]:
+    """Geta tuple representing a 3 vector from input that could be iterable or could be dict of form {"x": *, "y": *, "z": *}
+
+    :param vec: The variable to extract 3 vector from
+    :type vec: typing.Tuple[float] | typing.List[float] | typing.Dict[str, float]
+    :return: 3-tuple representing 3 vector
+    :rtype: typing.Tuple[float]
+    """
+
+    ret = None
+
+    if type(vec) in [tuple, list]:
+
+        assert len(vec) == 3, "3-vector must have length 3!!!"
+
+        ret = tuple(vec)
+
+    elif type(vec) == dict:
+
+        keys = vec.keys()
+
+        assert len(keys) <= 3, "Too many entries in position dict!!!"
+
+        x, y, z = None, None, None
+        
+        if "x" in keys:
+            x = vec["x"]
+
+        if "y" in keys:
+            y = vec["y"]
+
+        if "z" in keys:
+            z = vec["z"]
+
+        ret = (x, y, z)
+
+    else:
+        raise ValueError("What the hell is this????? I need something more vector-y")
+
+    return ret
+    
 class Hit:
     """Very generic detector hit, probably shouldn't use directly, should instead use one of the derived classes
     """
-
     def __init__(
         self,
-        x = None,
-        y = None,
-        z = None,
+        position = (None, None, None),
         time = None,
-        weight = None
+        weight = None,
+        direction = (None, None, None)
     ):
         
-        self.x = x
+        self.pos = position
+        """position of the hit"""
+        self.x = self.pos[0]
         """x position of the hit"""
-        self.y = y
+        self.y = self.pos[1]
         """y position of the hit"""
-        self.z = z
+        self.z = self.pos[2]
         """z position of the hit"""
         self.time = time
         """time of the hit"""
         self.weight = weight
         """the "weight" of this hit. Typically the charge/light collected"""
+        self.dir_x = None
+        """x position of the hit"""
+        self.dir_y = None
+        """y position of the hit"""
+        self.dir_z = None
+        """z position of the hit"""
+        ## set with function so properly normalises (also sets dir_* variables)
+        self.set_direction(direction) 
+        """the direction of the hit. e.g. the direction along the ridge for a peak hit"""
+
+    def set_position(self, new_pos: typing.Tuple[float]) -> None:
+        """Set a new position for this hit
+
+        :param new_pos: New position (must have length 3)
+        :type new_pos: typing.Tuple[float]
+        """
+
+        assert len(new_pos) == 3, "Position must be 3-tuple!!!"
+
+        self.pos = new_pos
+        self.x = self.pos[0]
+        self.y = self.pos[1]
+        self.z = self.pos[2]
+
+    def set_direction(self, new_dir: Vector3) -> None:
+        """Set a new direction for this hit
+
+        This will normalise the direction before setting the variables
+
+        :param new_dir: New direction (must have length 3)
+        :type new_dir: typing.Tuple[float]
+        """
+
+        unnormed = tuple_from_maybe_dict(new_dir)
+        
+        ## normalise
+        accum = 0.0
+        for i in range(3):
+            if unnormed[i] is not None:
+                accum += unnormed[i] * unnormed[i]
+
+        mag = np.sqrt(accum)
+
+        x, y, z = None, None, None
+        if unnormed[0] is not None:
+            x = unnormed[0] / mag
+        if unnormed[1] is not None:
+            y = unnormed[1] / mag
+        if unnormed[2] is not None:
+            z = unnormed[2] / mag
+
+        ## set members
+        self.dir = (x, y, z)
+        self.dir_x = self.dir[0]
+        self.dir_y = self.dir[1]
+        self.dir_z = self.dir[2]
 
     def __str__(self) -> str:
         """Summarise this hit as a string
@@ -50,18 +148,10 @@ class Hit2D(Hit):
 
         new_hit = Hit2D()
 
-        if old_hit.x is not None:
-            new_hit.x = float(old_hit.x)
-        if old_hit.y is not None:
-            new_hit.y = float(old_hit.y)
-        if old_hit.z is not None:
-            new_hit.z = float(old_hit.z)
-        if old_hit.fiber_x is not None:
-            new_hit.fiber_x = float(old_hit.fiber_x)
-        if old_hit.fiber_y is not None:
-            new_hit.fiber_y = float(old_hit.fiber_y)
-        if old_hit.fiber_z is not None:
-            new_hit.fiber_z = float(old_hit.fiber_z)
+        new_hit.set_position(old_hit.pos)
+        new_hit.set_fiber_position(old_hit.fiber_pos)
+        new_hit.set_direction(old_hit.dir)
+
         if old_hit.time is not None:
             new_hit.time = float(old_hit.time)
         if old_hit.weight is not None:
@@ -96,22 +186,19 @@ class Hit2D(Hit):
 
     def __init__(
         self,
-        x = None,
-        y = None,
-        z = None,
-        fiber_x = None,
-        fiber_y = None,
-        fiber_z = None,
+        pos = (None, None, None),
+        fiber_pos = (None, None, None),
         time = None,
         weight = None,
         secondary_hits = None
     ):
         
-        self.fiber_x = fiber_x
-        self.fiber_y = fiber_y
-        self.fiber_z = fiber_z
+        self.fiber_pos = fiber_pos
+        self.fiber_x = self.fiber_pos[0]
+        self.fiber_y = self.fiber_pos[1]
+        self.fiber_z = self.fiber_pos[2]
         
-        super().__init__(x, y, z, time, weight)
+        super().__init__(pos, time, weight)
 
         if secondary_hits is None:
             self.secondary_hits = list()
@@ -121,6 +208,19 @@ class Hit2D(Hit):
     def __str__(self):
         return super().__str__() + f" :: secondaries: {len(self.secondary_hits)}"
 
+    def set_fiber_position(self, new_fiber_pos: Vector3) -> None:
+        """Set a new fiber position for this hit
+
+        :param new_fiber_pos: New fiber direction (must have length 3)
+        :type new_fiber_post: typing.Tuple[float]
+        """
+
+        self.fiber_pos = tuple_from_maybe_dict(new_fiber_pos)
+        
+        ## Now set the individual position element variables
+        self.fiber_x = self.fiber_pos[0]
+        self.fiber_y = self.fiber_pos[1]
+        self.fiber_z = self.fiber_pos[2]
 
     def add_secondary_hit(self, new_hit, add_tertiary=False):
 
@@ -154,9 +254,9 @@ class Hit2D(Hit):
         :rtype: bool
         """
 
-        ## literally just check if the position is the same as the fiber position
-        ## if not it must have been modified and therefore must be a peak... could be done more elegantly
-        return getattr(self, direction) != getattr(self, "fiber_" + direction) 
+        ## Just check if the fiber has a direction defined along the given axis
+        dir = getattr(self, "dir_" + direction)
+        return (dir is not None) and (dir != 0.0)
 
 class Hit3D(Hit):
     """Describes a 3D hit constructed from two or three WLS fibers"""
@@ -180,20 +280,34 @@ class Hit3D(Hit):
 
         hit = Hit3D()
 
+        direction = [0.0, 0.0, 0.0]
+
         hit.x_fiber_hit = x_fiber_hit
         hit.y_fiber_hit = y_fiber_hit
         hit.z_fiber_hit = z_fiber_hit
 
         hit.voxel_z = (x_fiber_hit.z + y_fiber_hit.z) / 2.0
+        direction[2] = (x_fiber_hit.dir_z + y_fiber_hit.dir_z) / 2.0
+
         hit.voxel_x = y_fiber_hit.x
+        direction[0] = y_fiber_hit.dir_x
         if z_fiber_hit is not None:
             hit.voxel_x += z_fiber_hit.x
             hit.voxel_x /= 2.0
 
+            direction[0] += z_fiber_hit.dir_x
+            direction[0] /= 2.0
+
         hit.voxel_y = x_fiber_hit.y
+        direction[1] = x_fiber_hit.dir_y
         if z_fiber_hit is not None:
             hit.voxel_y += z_fiber_hit.y
             hit.voxel_y /= 2.0
+
+            direction[1] += z_fiber_hit.dir_y
+            direction[1] /= 2.0
+
+        hit.set_direction(direction)
 
         hit.time = min(x_fiber_hit.time, y_fiber_hit.time)
         if z_fiber_hit is not None:
@@ -232,9 +346,7 @@ class Hit3D(Hit):
 
     def __init__(
         self,
-        x = None,
-        y = None,
-        z = None,
+        position = (None, None, None),
         voxel_x = None,
         voxel_y = None,
         voxel_z = None, 
@@ -245,9 +357,7 @@ class Hit3D(Hit):
         z_fiber_hit = None
     ):
         super().__init__(
-            x,
-            y,
-            z,
+            position,
             time,
             weight
         )
