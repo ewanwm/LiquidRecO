@@ -776,6 +776,21 @@ commands defined by argparse which will then be available inside of your module 
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._do_make_debug_plots">
+<span class="sig-name descname"><span class="pre">_do_make_debug_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._do_make_debug_plots" title="Link to this definition"></a></dt>
+<dd><p>Make detailed plots of values used in the Hesse ridge detection algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hist</strong> (<em>np.array</em>) – The input image</p></li>
+<li><p><strong>u_name</strong> (<em>str</em>) – The label of the u direction (“x”, “y” or “z”)</p></li>
+<li><p><strong>v_name</strong> (<em>str</em>) – The label of the v direction (“x”, “y” or “z”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._finalise">
 <span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._finalise" title="Link to this definition"></a></dt>
 <dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
@@ -847,23 +862,8 @@ line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_debug_plots">
-<span class="sig-name descname"><span class="pre">_make_debug_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_debug_plots" title="Link to this definition"></a></dt>
-<dd><p>Make detailed plots of values used in the Hesse ridge detection algorithm</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>hist</strong> (<em>np.array</em>) – The input image</p></li>
-<li><p><strong>u_name</strong> (<em>str</em>) – The label of the u direction (“x”, “y” or “z”)</p></li>
-<li><p><strong>v_name</strong> (<em>str</em>) – The label of the v direction (“x”, “y” or “z”)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_plot">
-<span class="sig-name descname"><span class="pre">_make_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ridgeness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_plot" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">_make_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ridgeness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_eigenvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.peak_finding.HesseRidgeDetection2D._make_plot" title="Link to this definition"></a></dt>
 <dd><p>Make plot of the ridgeness score of each pixel (fiber) with direction of the detected ridges overlaid</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -873,6 +873,7 @@ line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
 <li><p><strong>hess_eigenvecs</strong> (<em>np.array</em>) – The 3D array of the eigenvectors of the hessian at each pixel</p></li>
 <li><p><strong>u_name</strong> (<em>str</em>) – The label of the u direction (“x”, “y” or “z”)</p></li>
 <li><p><strong>v_name</strong> (<em>str</em>) – The label of the v direction (“x”, “y” or “z”)</p></li>
+<li><p><strong>ax</strong> (<em>plt.axis</em>) – The pyplot axis object to plot to</p></li>
 </ul>
 </dd>
 </dl>
