@@ -51,6 +51,16 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#hits">Hits</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.Hit"><code class="docutils literal notranslate"><span class="pre">Hit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.dir_x"><code class="docutils literal notranslate"><span class="pre">Hit.dir_x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.dir_y"><code class="docutils literal notranslate"><span class="pre">Hit.dir_y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.dir_z"><code class="docutils literal notranslate"><span class="pre">Hit.dir_z</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.is_peak"><code class="docutils literal notranslate"><span class="pre">Hit.is_peak()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.is_x_peak"><code class="docutils literal notranslate"><span class="pre">Hit.is_x_peak</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.is_y_peak"><code class="docutils literal notranslate"><span class="pre">Hit.is_y_peak</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.pos"><code class="docutils literal notranslate"><span class="pre">Hit.pos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.set_direction"><code class="docutils literal notranslate"><span class="pre">Hit.set_direction()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.set_is_peak"><code class="docutils literal notranslate"><span class="pre">Hit.set_is_peak()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.set_position"><code class="docutils literal notranslate"><span class="pre">Hit.set_position()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.time"><code class="docutils literal notranslate"><span class="pre">Hit.time</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.weight"><code class="docutils literal notranslate"><span class="pre">Hit.weight</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit.x"><code class="docutils literal notranslate"><span class="pre">Hit.x</span></code></a></li>
@@ -61,7 +71,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.Hit2D"><code class="docutils literal notranslate"><span class="pre">Hit2D</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.copy"><code class="docutils literal notranslate"><span class="pre">Hit2D.copy()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.get_mean_pos"><code class="docutils literal notranslate"><span class="pre">Hit2D.get_mean_pos()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.is_peak"><code class="docutils literal notranslate"><span class="pre">Hit2D.is_peak()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.hit.Hit2D.set_fiber_position"><code class="docutils literal notranslate"><span class="pre">Hit2D.set_fiber_position()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.Hit3D"><code class="docutils literal notranslate"><span class="pre">Hit3D</span></code></a><ul>
@@ -69,6 +79,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.local_normalisation"><code class="docutils literal notranslate"><span class="pre">local_normalisation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#liquidreco.hit.tuple_from_maybe_dict"><code class="docutils literal notranslate"><span class="pre">tuple_from_maybe_dict()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#events">Events</a><ul>
@@ -108,7 +119,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#plotting">Plotting</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">HitBuilder2D</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -128,7 +139,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">Plotting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
 </ul>
@@ -169,8 +180,96 @@
 <blockquote>
 <div><dl class="py class" id="module-liquidreco.hit">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(False,</span> <span class="pre">False,</span> <span class="pre">False)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit" title="Link to this definition"></a></dt>
 <dd><p>Very generic detector hit, probably shouldn’t use directly, should instead use one of the derived classes</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.dir_x">
+<span class="sig-name descname"><span class="pre">dir_x</span></span><a class="headerlink" href="#liquidreco.hit.Hit.dir_x" title="Link to this definition"></a></dt>
+<dd><p>x position of the hit</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.dir_y">
+<span class="sig-name descname"><span class="pre">dir_y</span></span><a class="headerlink" href="#liquidreco.hit.Hit.dir_y" title="Link to this definition"></a></dt>
+<dd><p>y position of the hit</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.dir_z">
+<span class="sig-name descname"><span class="pre">dir_z</span></span><a class="headerlink" href="#liquidreco.hit.Hit.dir_z" title="Link to this definition"></a></dt>
+<dd><p>z position of the hit</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.is_peak">
+<span class="sig-name descname"><span class="pre">is_peak</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit.is_peak" title="Link to this definition"></a></dt>
+<dd><p>Checks if this hit is considered</p>
+<p>Can specify a direction to check if it is a peak in a particular direction i.e. more position info than just the fiber position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>direction</strong> (<em>str</em>) – Check if the hit is a peak in a specific direction, defaults to None</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if this hit is a peak hit</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.is_x_peak">
+<span class="sig-name descname"><span class="pre">is_x_peak</span></span><a class="headerlink" href="#liquidreco.hit.Hit.is_x_peak" title="Link to this definition"></a></dt>
+<dd><p>is a peak in x direction</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.is_y_peak">
+<span class="sig-name descname"><span class="pre">is_y_peak</span></span><a class="headerlink" href="#liquidreco.hit.Hit.is_y_peak" title="Link to this definition"></a></dt>
+<dd><p>is a peak in the y direction</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.pos">
+<span class="sig-name descname"><span class="pre">pos</span></span><a class="headerlink" href="#liquidreco.hit.Hit.pos" title="Link to this definition"></a></dt>
+<dd><p>position of the hit</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.set_direction">
+<span class="sig-name descname"><span class="pre">set_direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit.set_direction" title="Link to this definition"></a></dt>
+<dd><p>Set a new direction for this hit</p>
+<p>This will normalise the direction before setting the variables</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_dir</strong> (<em>Tuple</em><em>[</em><em>float</em><em>]</em>) – New direction (must have length 3)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.set_is_peak">
+<span class="sig-name descname"><span class="pre">set_is_peak</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_is_peak</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit.set_is_peak" title="Link to this definition"></a></dt>
+<dd><p>Set info about peakness of the hit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_is_peak</strong> (<em>Tuple</em><em>[</em><em>bool</em><em>]</em>) – New position (must have length 3)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.hit.Hit.set_position">
+<span class="sig-name descname"><span class="pre">set_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit.set_position" title="Link to this definition"></a></dt>
+<dd><p>Set a new position for this hit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_pos</strong> (<em>Tuple</em><em>[</em><em>float</em><em>]</em>) – New position (must have length 3)</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit.time">
 <span class="sig-name descname"><span class="pre">time</span></span><a class="headerlink" href="#liquidreco.hit.Hit.time" title="Link to this definition"></a></dt>
@@ -205,7 +304,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit2D">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_hits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit2D" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secondary_hits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit2D" title="Link to this definition"></a></dt>
 <dd><p>Describes a 2D WLS fiber hit</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit2D.copy">
@@ -245,18 +344,12 @@
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.hit.Hit2D.is_peak">
-<span class="sig-name descname"><span class="pre">is_peak</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit2D.is_peak" title="Link to this definition"></a></dt>
-<dd><p>Checks if this hit is considered a peak in a particular direction i.e. more position info than just the fiber position</p>
+<dt class="sig sig-object py" id="liquidreco.hit.Hit2D.set_fiber_position">
+<span class="sig-name descname"><span class="pre">set_fiber_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_fiber_pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.hit.Hit2D.set_fiber_position" title="Link to this definition"></a></dt>
+<dd><p>Set a new fiber position for this hit</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>direction</strong> (<em>str</em>) – The direction to test</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if this hit has peak info in the specified direction.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
+<dd class="field-odd"><p><strong>new_fiber_pos</strong> – New fiber direction (must have length 3)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -265,7 +358,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit3D">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit3D" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">Hit3D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_fiber_hit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.Hit3D" title="Link to this definition"></a></dt>
 <dd><p>Describes a 3D hit constructed from two or three WLS fibers</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.hit.Hit3D.from_fiber_hits">
@@ -297,6 +390,23 @@ e.g. if n_required_peaks = 1 and 0 of the provided fibers are classified as z pe
 <span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">local_normalisation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event_hits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_bins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.hit.local_normalisation" title="Link to this definition"></a></dt>
 <dd><p>do a local normalisation of the hits so that lokal peaks have “charge” of 1
 and hits in the neighbourhood have their charges normalised by this value</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="liquidreco.hit.tuple_from_maybe_dict">
+<span class="sig-prename descclassname"><span class="pre">liquidreco.hit.</span></span><span class="sig-name descname"><span class="pre">tuple_from_maybe_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#liquidreco.hit.tuple_from_maybe_dict" title="Link to this definition"></a></dt>
+<dd><p>Geta tuple representing a 3 vector from input that could be iterable or could be dict of form {“x”: <a href="#id1"><span class="problematic" id="id2">*</span></a>, “y”: <a href="#id3"><span class="problematic" id="id4">*</span></a>, “z”: <a href="#id5"><span class="problematic" id="id6">*</span></a>}</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vec</strong> (<em>Tuple</em><em>[</em><em>Any</em><em>] </em><em>| </em><em>List</em><em>[</em><em>Any</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The variable to extract 3 vector from</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>3-tuple representing 3 vector</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[Any]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div></blockquote>
@@ -542,8 +652,8 @@ Takes in raw hit info and turns it into more structiured hits.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="id1">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id7">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
 <dd><p>Makes 3D hits from 2d fiber hits</p>
 </dd></dl>
 
@@ -611,8 +721,8 @@ looping over them, applying fit modules specified by the user.</p>
 
 </div></blockquote>
 </section>
-<section id="id2">
-<h2>Plotting<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<section id="id8">
+<h2>Plotting<a class="headerlink" href="#id8" title="Link to this heading"></a></h2>
 <blockquote>
 <div></div></blockquote>
 </section>
