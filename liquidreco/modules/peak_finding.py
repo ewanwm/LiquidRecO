@@ -314,12 +314,12 @@ neighbourhood.
         parser.add_argument(
             "--fit-blobs", 
             help="Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass.", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         parser.add_argument(
             "--make-plots", 
             help="Whether to make debug plots.", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         ## Note these are passed as a string but will later be converted to dictionaries
         parser.add_argument(
@@ -832,7 +832,7 @@ class HesseRidgeDetection2D(ModuleBase):
         parser.add_argument(
             "--make-plots", 
             help="Whether to make basic plots", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         parser.add_argument(
             "--plot-file-name", 
@@ -842,7 +842,7 @@ class HesseRidgeDetection2D(ModuleBase):
         parser.add_argument(
             "--make-debug-plots", 
             help="Whether to make debug plots", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         parser.add_argument(
             "--debug-plot-file-name", 
@@ -1233,7 +1233,7 @@ class HesseRidgeDetection3D(ModuleBase):
         parser.add_argument(
             "--make-plots", 
             help="Whether to make basic plots", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         parser.add_argument(
             "--plot-file-name", 
@@ -1243,7 +1243,7 @@ class HesseRidgeDetection3D(ModuleBase):
         parser.add_argument(
             "--make-debug-plots", 
             help="Whether to make debug plots", 
-            required = False, default = False, type = bool,
+            action='store_true'
         )
         parser.add_argument(
             "--debug-plot-file-name", 
