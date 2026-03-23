@@ -153,6 +153,11 @@ class MinimumSpanningTree2D(ModuleBase):
         if self._make_plots:
             self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.plot_file_name)
     
+        self._neighbour_distance = self.args.neighbour_distance
+        self.direction_cost_weight = self.args.direction_cost_weight
+        self.difference_direction_cost_weight = self.args.difference_direction_cost_weight
+        self.distance_cost_weight = self.args.distance_cost_weight
+
     def _finalise(self):
         
         if self._pdf is not None:
@@ -169,6 +174,26 @@ class MinimumSpanningTree2D(ModuleBase):
             "--plot-file-name", 
             help="Where to put the plots if --make-plots is specified", 
             type=str, default="MST-examples.pdf", required=False
+        )
+        parser.add_argument(
+            "--neighbour-distance", 
+            help="The farthest distance between two hits for them to be considered neighbours (i.e. for them to be allowed to be connected by an edge in the MST)", 
+            type=float, default=21.0, required=False
+        )
+        parser.add_argument(
+            "--direction-cost-weight", 
+            help="How heavily to weight the dot product of the direction of the two hits when calculating the cost function", 
+            type=float, default=1.0, required=False
+        )
+        parser.add_argument(
+            "--difference-direction-cost-weight", 
+            help="How heavily to weight the dot product of the direction of each hit, with the position difference to the other hit when calculating the cost function", 
+            type=float, default=1.0, required=False
+        )
+        parser.add_argument(
+            "--distance-cost-weight", 
+            help="How heavily to weight the distance between the two hits when calculating the cost function", 
+            type=float, default=1.0, required=False
         )
 
     def _process(self, event):
@@ -211,13 +236,19 @@ class MinimumSpanningTree2D(ModuleBase):
                     dir1[dir1 == None] = 0.0
                     dir2[dir2 == None] = 0.0
 
-                    if np.linalg.norm(pos1 - pos2) > 25.0:
+                    if np.linalg.norm(pos1 - pos2) > self._neighbour_distance:
                         continue
 
                     else:
                         dot = np.abs(np.dot(dir1, dir2))
 
-                        graph_array[i1, i2] = dot + np.abs(np.dot(dir1, pos2 - pos1)) / 2.0 + np.abs(np.dot(dir2, pos2 - pos1)) / 2.0 + np.linalg.norm(pos1 - pos2) / 25.0
+                        cost = (
+                            self.direction_cost_weight            * (1.0 - dot) + 
+                            self.difference_direction_cost_weight * (1.0 -(np.abs(np.dot(dir1, pos2 - pos1)) + np.abs(np.dot(dir2, pos2 - pos1))) / 2.0) + 
+                            self.distance_cost_weight             * np.linalg.norm(pos1 - pos2) / self._neighbour_distance
+                        )
+
+                        graph_array[i1, i2] = cost
 
             min_spanning_tree = csgraph.minimum_spanning_tree(graph_array)
         
