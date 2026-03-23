@@ -1163,33 +1163,57 @@ class HesseRidgeDetection2D(ModuleBase):
         """
 
         huu, hvv, huv, hvu = self._hessian(hist)
-        fig, ax = plt.subplots(1, 8, figsize=(50, 10))
-        ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"), origin='lower')
+
+        fig, ax = plt.subplots(1, 8, figsize=(40, 5))
+        m = ax[0].imshow(hist, cmap=plt.get_cmap("coolwarm"), origin='lower')
+        plt.colorbar(m)
         ax[0].set_title("Original Event")
 
-        ax[1].imshow(huu, cmap=plt.get_cmap("gray"), origin='lower')
+        m = ax[1].imshow(huu, cmap=plt.get_cmap("gray"), origin='lower')
         ax[1].set_title(f"H_{u_name}{u_name}")
-        ax[2].imshow(huv, cmap=plt.get_cmap("gray"), origin='lower')
+        plt.colorbar(m)
+        m = ax[2].imshow(huv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[2].set_title(f"H_{u_name}{v_name}")
-        ax[3].imshow(hvu, cmap=plt.get_cmap("gray"), origin='lower')
+        plt.colorbar(m)
+        m = ax[3].imshow(hvu, cmap=plt.get_cmap("gray"), origin='lower')
         ax[3].set_title(f"H_{v_name}{u_name}")
-        ax[4].imshow(hvv, cmap=plt.get_cmap("gray"), origin='lower')
+        plt.colorbar(m)
+        m = ax[4].imshow(hvv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[4].set_title(f"H_{v_name}{v_name}")
+        plt.colorbar(m)
 
         du, dv = self._gradient(hist)
-        ax[5].imshow(du, cmap=plt.get_cmap("gray"), origin='lower')
+        m = ax[5].imshow(du, cmap=plt.get_cmap("gray"), origin='lower')
         ax[5].set_title(f"D_{u_name}")
-        ax[6].imshow(dv, cmap=plt.get_cmap("gray"), origin='lower')
+        plt.colorbar(m)
+        m = ax[6].imshow(dv, cmap=plt.get_cmap("gray"), origin='lower')
         ax[6].set_title(f"D_{v_name}")
+        plt.colorbar(m)
 
         hess_eigenvals, _ = self._hess_eigen(hist)
         ridgeness = self._compute_ridgeness(hist, hess_eigenvals)
-        ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"), origin='lower')
+        m = ax[7].imshow(ridgeness, cmap=plt.get_cmap("gray"), origin='lower')
         ax[7].set_title("Hessian Filter")
+        plt.colorbar(m)
 
         self._debug_pdf.savefig(fig)
         plt.close(fig)
         
+        fig, ax = plt.subplots(1, 2, figsize=(20, 10))
+        z_low, z_high = np.min(hess_eigenvals[0,...]), np.max(hess_eigenvals[0,...])
+        max_z = max(-z_low, z_high)
+        m = ax[0].imshow(hess_eigenvals[0,...], cmap=plt.get_cmap("coolwarm"), origin='lower', vmax = -max_z, vmin = max_z)
+        ax[0].set_title("evals[0]")
+        plt.colorbar(m)
+
+        z_low, z_high = np.min(hess_eigenvals[1,...]), np.max(hess_eigenvals[1,...])
+        max_z = max(-z_low, z_high)
+        m = ax[1].imshow(hess_eigenvals[1,...], cmap=plt.get_cmap("coolwarm"), origin='lower', vmax = -max_z, vmin = max_z)
+        plt.colorbar(m)
+        ax[1].set_title("evals[1]")
+        
+        self._debug_pdf.savefig(fig)
+        plt.close(fig)
 
 class HesseRidgeDetection3D(ModuleBase):
     """Performs "ridge detection" using the Hessian of a 3D image of the detector
