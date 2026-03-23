@@ -2,7 +2,7 @@ import typing
 
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.peak_finding import HesseRidgeDetection2D, HesseRidgeDetection3D, PeakFinder2D
-from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN
+from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN, MinimumSpanningTree2D
 from liquidreco.modules.hit_building import HitBuilder2D, HitBuilder3D
 from liquidreco.modules.utility import WeightScaling
 from liquidreco.modules.plotting import HitPlotter2D, HitPlotter3D
@@ -87,6 +87,7 @@ ModuleList().register(PeakFinder2D)
 
 ## reconstruction
 ModuleList().register(HoughTransform)
+ModuleList().register(MinimumSpanningTree2D)
 #ModuleList().register(LocalMeanDBSCAN) <- this thing is mad broken... maybe one day it will be fixed
 
 ## plotting
