@@ -8,6 +8,7 @@ from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN, M
 from liquidreco.modules.hit_building import HitBuilder2D, HitBuilder3D
 from liquidreco.modules.utility import WeightScaling
 from liquidreco.modules.plotting import HitPlotter2D, HitPlotter3D
+from liquidreco.modules.deconvolution import LaplaceFitter
     
 class ModuleList(metaclass=Singleton):
 
@@ -86,3 +87,6 @@ ModuleList().register(MinimumSpanningTree2D)
 ## plotting
 ModuleList().register(HitPlotter2D)
 ModuleList().register(HitPlotter3D)
+
+## deconvolution
+ModuleList().register(LaplaceFitter)
