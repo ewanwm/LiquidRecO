@@ -5,7 +5,7 @@ from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.module_list import ModuleList
 from liquidreco.geometry import GeometryManager
 
-from jsonargparse import ArgumentParser, Namespace, ActionConfigFile, dict_to_namespace, namespace_to_dict
+from jsonargparse import ArgumentParser, Namespace, namespace_to_dict
 
 from argparse import RawTextHelpFormatter
 
@@ -34,14 +34,14 @@ class Configuration:
         self._make_geometry_parser = None
         self._setup_parser()
 
+        ## the arguments of the fit command
+        self.fit_args = None
+
         ## the instances of the modules to run
         self.modules: typing.List[ModuleBase] = []
 
-        ## the parsed arguments
-        self.base_args = None
-        self.fit_args = None
-        self.make_config_args = None
-        self.make_geometry_config_args = None
+        ## the command the user wants to run
+        self._command = None
 
     def _setup_parser(self) -> None:
         """Set up the base argument parser - the one that deals with everything that isn't
@@ -87,7 +87,6 @@ class Configuration:
             help="JSON file describing the detector geometry (generated using the liquidreco make-geometry-config command)", 
             required=True, type=str
         )
-
 
     def _setup_fit_parser(self) -> None:
         """Set up the parser that deals with arguments for the "fit" command
@@ -206,6 +205,17 @@ class Configuration:
         ## add values for the last parsed module
         self._raw_args.append(current_arg_list)
 
+        ## parse the args for each module and set up the list of modules to be applied
+        for module_command, module_args in zip(self._commands, self._raw_args[1:]):
+
+            module_inst = ModuleList().get_module(module_command)()
+            arg_parser = ArgumentParser(module_command, description = module_inst.help(), formatter_class=RawTextHelpFormatter)
+
+            module_inst.setup_parser(arg_parser)
+
+            module_inst.parse_args(module_args)
+
+            self.modules.append(module_inst)
 
     def _parse_json_config(self, config_file: str) -> None:
         """Parse a json config file
@@ -248,7 +258,127 @@ class Configuration:
 
             self.modules.append(module_inst)
 
-    
+    def _parse_fit_args(self, fit_args: Namespace) -> None:
+        """parses arguments for the "fit" command
+
+        :param fit_args: the arguments
+        :type fit_args: Namespace
+        :raises ValueError: if the geometry option has not been given by user
+        """
+
+        ## if -c option specified, parse the module options from config file
+        if fit_args.config is not None:
+
+            self._parse_json_config(fit_args.config)
+
+        ## otherwise we need to parse the geometry file 
+        else:
+
+            if fit_args.geometry is None:
+
+                raise ValueError("Did not provide a geometry file via -g option, I need this :( (unless you run with -c option)")
+            
+            with open(fit_args.geometry, "r") as geometry_file:
+                
+                json_geometry = json.load(geometry_file)
+                GeometryManager().parse_object(json_geometry)
+
+        self.fit_args = fit_args
+
+    def _parse_make_geometry_config_args(self, make_geometry_config_args: Namespace) -> None:
+        """Parse arguments for the make-geometry-config command
+
+        :param make_geometry_config_args: arguments
+        :type make_geometry_config_args: Namespace
+        """
+
+        ## if we are just making geometry config file, dump the json then exit
+
+        ## strip the "file" option
+        geom_args = Namespace(make_geometry_config_args)
+        geom_args.pop("file")
+
+        GeometryManager().consume_args(geom_args)
+
+        geometry_arg_dict = namespace_to_dict(GeometryManager().args)
+        
+        with open(make_geometry_config_args.file, "w") as file:
+            json.dump(
+                geometry_arg_dict,
+                file,
+                indent=4, sort_keys=True
+            )
+
+        exit(0)
+
+    def _parse_make_config_args(self, make_config_args: Namespace) -> None:
+        """Parse the arguments for the make-config command
+
+        :param make_config_args: the arguments
+        :type make_config_args: Namespace
+        """
+
+        ## if we are just making config file, dump the json then exit
+            
+        with open(make_config_args.geometry, "r") as geometry_file:
+            
+            json_geometry = json.load(geometry_file)
+            GeometryManager().parse_object(json_geometry)
+
+        with open(make_config_args.file, "w") as file:
+            json.dump(
+                self.to_json(),
+                file,
+                indent=4, sort_keys=True
+            )
+
+        exit(0)
+
+    def parse_args(self, args: typing.List[str]) -> None:
+        """Parse list of arguments  
+
+        You probably want to pass in sys.argv[1:] - this will get you the command line 
+        arguments specified by a user
+
+        :param args: The list of arguments to be parsed
+        :type args: typing.List[str]
+        """
+
+        ## read in the command line
+        self._parse_cl_args(args)
+
+        ## parse the base arguments
+        base_args = self._base_parser.parse_args(self._raw_args[0])
+
+        self._command = base_args.command
+        
+        if self.get_command() == "fit":
+            fit_args = base_args["fit"]
+            self._parse_fit_args(fit_args)
+
+        elif self.get_command() == "make-config":
+            make_config_args = base_args["make-config"]
+            self._parse_make_config_args(make_config_args)
+
+        elif self.get_command() == "make-geometry-config":
+            make_geometry_config_args = base_args["make-geometry-config"]
+            self._parse_make_geometry_config_args(make_geometry_config_args)
+
+        else:
+            raise ValueError(f"Whaaat :0 invalid command specified: {self.get_command()}")
+
+    def get_command(self) -> str:
+        """Get the command specified by command line
+
+        :return: name of the command being run by the user
+        :rtype: str
+        """
+
+        if self._command is None:
+            raise ValueError("command has not been set yet!!!")
+        
+        return self._command
+
     def to_json(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
         """Dump the module configuration to a json string
 
@@ -277,93 +407,4 @@ class Configuration:
             "geometry": geometry_arg_dict,
             "modules": module_jsons
         }
-
-    def parse_args(self, args: typing.List[str]) -> None:
-        """Parse list of arguments  
-
-        You probably want to pass in sys.argv[1:] - this will get you the command line 
-        arguments specified by a user
-
-        :param args: The list of arguments to be parsed
-        :type args: typing.List[str]
-        """
-
-        ## read in the command line
-        self._parse_cl_args(args)
-
-        ## parse the base arguments
-        self.base_args = self._base_parser.parse_args(self._raw_args[0])
-        if self.base_args.command == "fit":
-            self.fit_args = self.base_args["fit"]
-        if self.base_args.command == "make-config":
-            self.make_config_args = self.base_args["make-config"]
-        if self.base_args.command == "make-geometry-config":
-            self.make_geometry_config_args = self.base_args["make-geometry-config"]
-
-        if self.fit_args is not None:
-
-            ## if -c option specified, parse the module options from config file
-            if self.fit_args.config is not None:
-
-                self._parse_json_config(self.fit_args.config)
-
-            ## otherwise we need to parse the geometry file 
-            else:
-
-                if self.fit_args.geometry is None:
-
-                    raise ValueError("Did not provide a geometry file via -g option, I need this :( (unless you run with -c option)")
-                
-                with open(self.fit_args.geometry, "r") as geometry_file:
-                    
-                    json_geometry = json.load(geometry_file)
-                    GeometryManager().parse_object(json_geometry)
-
-        ## parse the args for each module and set up the list of modules to be applied
-        for module_command, module_args in zip(self._commands, self._raw_args[1:]):
-
-            module_inst = ModuleList().get_module(module_command)()
-            arg_parser = ArgumentParser(module_command, description = module_inst.help(), formatter_class=RawTextHelpFormatter)
-
-            module_inst.setup_parser(arg_parser)
-
-            module_inst.parse_args(module_args)
-
-            self.modules.append(module_inst)
-
-        ## if we are just making geometry config file, dump the json then exit
-        if self.make_geometry_config_args is not None:
-
-            ## strip the "file" option
-            geom_args = Namespace(self.make_geometry_config_args)
-            geom_args.pop("file")
-
-            GeometryManager().consume_args(geom_args)
-
-            geometry_arg_dict = namespace_to_dict(GeometryManager().args)
-            
-            with open(self.make_geometry_config_args.file, "w") as file:
-                json.dump(
-                    geometry_arg_dict,
-                    file,
-                    indent=4, sort_keys=True
-                )
-
-            exit(0)
-
-        ## if we are just making config file, dump the json then exit
-        if self.make_config_args is not None:
-            
-            with open(self.make_config_args.geometry, "r") as geometry_file:
-                
-                json_geometry = json.load(geometry_file)
-                GeometryManager().parse_object(json_geometry)
- 
-            with open(self.make_config_args.file, "w") as file:
-                json.dump(
-                    self.to_json(),
-                    file,
-                    indent=4, sort_keys=True
-                )
-
-            exit(0)
+    
