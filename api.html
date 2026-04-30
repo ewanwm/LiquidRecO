@@ -129,11 +129,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco.configuration.Configuration"><code class="docutils literal notranslate"><span class="pre">Configuration</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._add_module_subparsers"><code class="docutils literal notranslate"><span class="pre">Configuration._add_module_subparsers()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_cl_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_cl_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_fit_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_fit_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_json_config"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_json_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_make_config_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_make_config_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_make_geometry_config_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_make_geometry_config_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_fit_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_fit_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_geometry_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_geometry_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_make_config_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_make_config_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_parser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.get_command"><code class="docutils literal notranslate"><span class="pre">Configuration.get_command()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.parse_args"><code class="docutils literal notranslate"><span class="pre">Configuration.parse_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.to_json"><code class="docutils literal notranslate"><span class="pre">Configuration.to_json()</span></code></a></li>
 </ul>
@@ -1514,6 +1518,20 @@ help message with all available modules listed</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_fit_args">
+<span class="sig-name descname"><span class="pre">_parse_fit_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fit_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Namespace</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_fit_args" title="Link to this definition"></a></dt>
+<dd><p>parses arguments for the “fit” command</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fit_args</strong> (<em>Namespace</em>) – the arguments</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the geometry option has not been given by user</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_json_config">
 <span class="sig-name descname"><span class="pre">_parse_json_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_json_config" title="Link to this definition"></a></dt>
 <dd><p>Parse a json config file</p>
@@ -1522,6 +1540,28 @@ previously specified module settings</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config_file</strong> (<em>str</em>) – The file to read the config from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_make_config_args">
+<span class="sig-name descname"><span class="pre">_parse_make_config_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">make_config_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Namespace</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_make_config_args" title="Link to this definition"></a></dt>
+<dd><p>Parse the arguments for the make-config command</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>make_config_args</strong> (<em>Namespace</em>) – the arguments</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._parse_make_geometry_config_args">
+<span class="sig-name descname"><span class="pre">_parse_make_geometry_config_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">make_geometry_config_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Namespace</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._parse_make_geometry_config_args" title="Link to this definition"></a></dt>
+<dd><p>Parse arguments for the make-geometry-config command</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>make_geometry_config_args</strong> (<em>Namespace</em>) – arguments</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1552,6 +1592,20 @@ previously specified module settings</p>
 <span class="sig-name descname"><span class="pre">_setup_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_parser" title="Link to this definition"></a></dt>
 <dd><p>Set up the base argument parser - the one that deals with everything that isn’t
 some module specific parameter</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration.get_command">
+<span class="sig-name descname"><span class="pre">get_command</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration.get_command" title="Link to this definition"></a></dt>
+<dd><p>Get the command specified by command line</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>name of the command being run by the user</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
