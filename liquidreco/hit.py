@@ -149,7 +149,7 @@ class Hit:
         self.dir_y = self.dir[1]
         self.dir_z = self.dir[2]
 
-    def is_peak(self, direction:str = None) -> bool:
+    def get_is_peak(self, direction:str = None) -> bool:
         """Checks if this hit is considered
          
         Can specify a direction to check if it is a peak in a particular direction i.e. more position info than just the fiber position
@@ -319,25 +319,57 @@ class Hit3D(Hit):
         hit.z_fiber_hit = z_fiber_hit
 
         hit.voxel_z = (x_fiber_hit.z + y_fiber_hit.z) / 2.0
-        direction[2] = (x_fiber_hit.dir_z + y_fiber_hit.dir_z) / 2.0
+        z_dir_cont = 0
+        if x_fiber_hit.dir_z is not None:
+            direction[2] += x_fiber_hit.dir_z
+            z_dir_cont += 1 
+        if y_fiber_hit.dir_z is not None:
+            direction[2] += y_fiber_hit.dir_z
+            z_dir_cont += 1
+
+        if z_dir_cont == 0:
+            direction[2] = 0.0
+        else:
+            direction[2] /= z_dir_cont
 
         hit.voxel_x = y_fiber_hit.x
-        direction[0] = y_fiber_hit.dir_x
+        x_dir_cont = 0
+        if y_fiber_hit.dir_x is not None:
+            direction[0] = y_fiber_hit.dir_x
+            x_dir_cont += 1
         if z_fiber_hit is not None:
             hit.voxel_x += z_fiber_hit.x
             hit.voxel_x /= 2.0
 
-            direction[0] += z_fiber_hit.dir_x
-            direction[0] /= 2.0
+            if z_fiber_hit.dir_x is not None:
+                direction[0] += z_fiber_hit.dir_x
+                x_dir_cont += 1
+            
+            if x_dir_cont == 0:
+                direction[0] = None
+            else:
+                direction[0] /= x_dir_cont
 
         hit.voxel_y = x_fiber_hit.y
-        direction[1] = x_fiber_hit.dir_y
+        
+        y_dir_cont = 0
+        if x_fiber_hit.dir_y is not None:
+            direction[1] = x_fiber_hit.dir_y
+            y_dir_cont += 1
+
         if z_fiber_hit is not None:
             hit.voxel_y += z_fiber_hit.y
             hit.voxel_y /= 2.0
 
-            direction[1] += z_fiber_hit.dir_y
-            direction[1] /= 2.0
+            if z_fiber_hit.dir_y is not None:
+                direction[1] += z_fiber_hit.dir_y
+                y_dir_cont += 1
+
+            if y_dir_cont == 0:
+                direction[1] = None
+
+            else:
+                direction[1] /= y_dir_cont
 
         hit.set_direction(direction)
 
@@ -351,15 +383,15 @@ class Hit3D(Hit):
 
         ## check the number of peak hits in each dimension
         if n_required_peaks:
-            n_x_peaks:int = int(y_fiber_hit.is_peak("x"))
+            n_x_peaks:int = int(y_fiber_hit.is_peak[0])
             if z_fiber_hit:
-                n_x_peaks += int(z_fiber_hit.is_peak("x"))
+                n_x_peaks += int(z_fiber_hit.is_peak[0])
 
-            n_y_peaks:int = int(x_fiber_hit.is_peak("y"))
+            n_y_peaks:int = int(x_fiber_hit.is_peak[1])
             if z_fiber_hit:
-                n_y_peaks += int(z_fiber_hit.is_peak("y"))
+                n_y_peaks += int(z_fiber_hit.is_peak[1])
                 
-            n_z_peaks:int = int(x_fiber_hit.is_peak("z") + y_fiber_hit.is_peak("z"))
+            n_z_peaks:int = int(x_fiber_hit.is_peak[2] + y_fiber_hit.is_peak[2])
 
             ## if any are below the threshold, return a None
             if (
@@ -407,17 +439,17 @@ class Hit3D(Hit):
         if self.z_fiber_hit is not None:
 
             ## if neither 2d hit contains extra x information, just get voxel position
-            if not self.y_fiber_hit.is_peak("x") and not self.z_fiber_hit.is_peak("x"):
+            if not self.y_fiber_hit.is_peak[0] and not self.z_fiber_hit.is_peak[0]:
                 return self.voxel_x
             
             ## otherwise do a weighted mean of the two
             x = 0.0
             accum = 0.0
 
-            if self.y_fiber_hit.is_peak("x"):
+            if self.y_fiber_hit.is_peak[0]:
                 x += self.y_fiber_hit.x
                 accum += 1
-            if self.z_fiber_hit.is_peak("x"):
+            if self.z_fiber_hit.is_peak[0]:
                 x += self.z_fiber_hit.x
                 accum += 1
             
@@ -432,17 +464,17 @@ class Hit3D(Hit):
         if self.z_fiber_hit is not None:
 
             ## if neither 2d hit contains extra x information, just get voxel position
-            if not self.x_fiber_hit.is_peak("y") and not self.z_fiber_hit.is_peak("y"):
+            if not self.x_fiber_hit.is_peak[1] and not self.z_fiber_hit.is_peak[1]:
                 return self.voxel_y
             
             ## otherwise do a weighted mean of the two
             y = 0.0
             accum = 0.0
 
-            if self.x_fiber_hit.is_peak("y"):
+            if self.x_fiber_hit.is_peak[1]:
                 y += self.x_fiber_hit.y
                 accum += 1
-            if self.z_fiber_hit.is_peak("y"):
+            if self.z_fiber_hit.is_peak[1]:
                 y += self.z_fiber_hit.y
                 accum += 1
             
@@ -455,17 +487,17 @@ class Hit3D(Hit):
     def get_mean_z(self) -> float:
 
         ## if neither 2d hit contains extra x information, just get voxel position
-        if not self.x_fiber_hit.is_peak("z") and not self.y_fiber_hit.is_peak("z"):
+        if not self.x_fiber_hit.is_peak[2] and not self.y_fiber_hit.is_peak[2]:
             return self.voxel_z
         
         ## otherwise do a weighted mean of the two
         z = 0.0
         accum = 0.0
 
-        if self.x_fiber_hit.is_peak("z"):
+        if self.x_fiber_hit.is_peak[2]:
             z += self.x_fiber_hit.z
             accum += 1
-        if self.y_fiber_hit.is_peak("z"):
+        if self.y_fiber_hit.is_peak[2]:
             z += self.y_fiber_hit.z
             accum += 1
         
