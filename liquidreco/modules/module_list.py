@@ -1,20 +1,13 @@
 import typing
 
+from liquidreco.base import Singleton
+
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.peak_finding import HesseRidgeDetection2D, HesseRidgeDetection3D, PeakFinder2D
 from liquidreco.modules.reconstruction import HoughTransform, LocalMeanDBSCAN, MinimumSpanningTree2D
 from liquidreco.modules.hit_building import HitBuilder2D, HitBuilder3D
 from liquidreco.modules.utility import WeightScaling
 from liquidreco.modules.plotting import HitPlotter2D, HitPlotter3D
-
-class Singleton(type):
-    
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
     
 class ModuleList(metaclass=Singleton):
 
