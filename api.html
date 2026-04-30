@@ -120,7 +120,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#plotting">Plotting</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">HitBuilder2D</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">HitBuilder3D</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -131,6 +131,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_cl_args"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_cl_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._parse_json_config"><code class="docutils literal notranslate"><span class="pre">Configuration._parse_json_config()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_fit_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_fit_parser()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_geometry_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_geometry_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_make_config_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_make_config_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration._setup_parser"><code class="docutils literal notranslate"><span class="pre">Configuration._setup_parser()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.configuration.Configuration.parse_args"><code class="docutils literal notranslate"><span class="pre">Configuration.parse_args()</span></code></a></li>
@@ -147,7 +148,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id14">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">Plotting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#apps">Apps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#liquidreco">liquidreco</a></li>
 </ul>
@@ -686,19 +687,6 @@ Should process a single event and add any results to the event object.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>NotImplementedError</strong> – if not implemented</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.hit_building.HitBuilder2D._setup_cli_options">
-<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.hit_building.HitBuilder2D._setup_cli_options" title="Link to this definition"></a></dt>
-<dd><p>Override this to set up any command line options for this module</p>
-<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
-commands defined by argparse which will then be available inside of your module via self.args.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1440,36 +1428,23 @@ Should process a single event and add any results to the event object.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="id9">
-<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
-<dd><p>Override this to set up any command line options for this module</p>
-<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
-commands defined by argparse which will then be available inside of your module via self.args.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="id10">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id9">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.hit_building.</span></span><span class="sig-name descname"><span class="pre">HitBuilder3D</span></span><a class="headerlink" href="#id9" title="Link to this definition"></a></dt>
 <dd><p>Makes 3D hits from 2d fiber hits</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="id11">
-<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id10" title="Link to this definition"></a></dt>
 <dd><p>Set up anything here that needs to be initialised</p>
 <p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
 line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="id12">
-<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#id11" title="Link to this definition"></a></dt>
 <dd><p>This method should be implemented by any modules you write.
 Should process a single event and add any results to the event object.</p>
 <dl class="field-list simple">
@@ -1483,8 +1458,8 @@ Should process a single event and add any results to the event object.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="id13">
-<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id13" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id12" title="Link to this definition"></a></dt>
 <dd><p>Override this to set up any command line options for this module</p>
 <p>The parser passed to this will be a subparser associated with this module. you can call any number of 
 commands defined by argparse which will then be available inside of your module via self.args.</p>
@@ -1559,6 +1534,13 @@ previously specified module settings</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.configuration.Configuration._setup_geometry_parser">
+<span class="sig-name descname"><span class="pre">_setup_geometry_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_geometry_parser" title="Link to this definition"></a></dt>
+<dd><p>Set up the parser that deals with geometry arguments</p>
+<p>Will set the _geometry_parser member variable</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="liquidreco.configuration.Configuration._setup_make_config_parser">
 <span class="sig-name descname"><span class="pre">_setup_make_config_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.configuration.Configuration._setup_make_config_parser" title="Link to this definition"></a></dt>
 <dd><p>Set up the parser that deals with arguments for the “make-config” command</p>
@@ -1628,8 +1610,8 @@ looping over them, applying fit modules specified by the user.</p>
 
 </div></blockquote>
 </section>
-<section id="id14">
-<h2>Plotting<a class="headerlink" href="#id14" title="Link to this heading"></a></h2>
+<section id="id13">
+<h2>Plotting<a class="headerlink" href="#id13" title="Link to this heading"></a></h2>
 <blockquote>
 <div></div></blockquote>
 </section>
