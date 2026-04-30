@@ -4,257 +4,16 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf
 import numpy as np
-import scipy
-from scipy.stats import laplace
-from scipy.optimize import curve_fit
 from sklearn.neighbors import NearestNeighbors
-from sklearn.cluster import DBSCAN
 from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from scipy.linalg import eig
 
 import typing
-import json
 
 from liquidreco.hit import Hit, Hit2D, Hit3D
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.event import Event
-
-class LaplaceFitter:
-    """Performs a fit of an ensemble of laplace distributions to observed collected charges in fibers in order to try to determine which 
-    """
-
-    def __init__(
-        self,
-        neighbourhood_dist:float = 45.0,
-        peak_candidate_threshold:float = 100.0,
-        amplitude_threshold:float = 50.0,
-        fix_width: float = None,
-        min_n_neighbours: int = 0,
-        make_plots = False
-    ):
-        """Initialiser
-
-        :param neighbourhood_dist: The distance around a fiber that is considered its local neighbourhood. Only fibers in the same neighbourhood are considered when sharing light in order to speed up the fit, defaults to 45.0
-        :type neighbourhood_dist: float, optional
-        :param peak_candidate_threshold: Fibers with a charge above this are considered candidate peak hits, defaults to 100.0
-        :type peak_candidate_threshold: float, optional
-        :param amplitude_threshold: Fibers whose post-fit laplace distribution amplitude is above this are considered peak hits, defaults to 50.0
-        :type amplitude_threshold: float, optional
-        :param fix_width: Set this to fix the width of the laplace distributions in the fit. If None then it will be fit as a parameter, defaults to None
-        :type fix_width: float, optional
-        :param min_n_neighbours: Fibers must have this many other fibers in their neighbourhood to be included in the fit, defaults to 0
-        :type min_n_neighbours: int, optional
-        :param make_plots: Whether this fitter should make debug plots while running
-        :type fix_width: bool, optional
-        """
-
-        self._neighbourhood_dist:float = neighbourhood_dist
-        self._peak_candidate_threshold:float = peak_candidate_threshold
-        self._amplitude_threshold:float = amplitude_threshold
-        self._fix_width:float = fix_width
-        self._min_n_neighbours = min_n_neighbours
-        self._make_plots:bool = make_plots
-
-        ## use this to define neighbourhood around fibers
-        self._neighbour_algo = NearestNeighbors(radius = self._neighbourhood_dist)
-
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("LaplaceFitter-plots.pdf")
-
-    def finalise(self):
-
-        self._pdf.close()
-
-    
-    def __call__(
-        self,
-        fiber_hits: typing.List['Hit2D'], 
-        u:str, v:str
-    ) -> typing.Tuple[typing.List['Hit2D']]:
-        """Find peaks by attempting to fit laplace distributions to prominent fibers
-
-        :param fiber_hits: The hits to fit to
-        :type fiber_hits: typing.List['Hit2D']
-        :param u: The u direction, should be "x", "y" or "z"
-        :type u: str
-        :param v: The v direction, should be "x", "y" or "z"
-        :type v: str
-        :return: Peak hits found by the fit
-        :rtype: typing.Tuple[typing.List['Hit2D']]
-        """
-        
-        print(f"  - LAPLACE FIT: n {u}{v} fibers: {len(fiber_hits)}")
-        
-        ## get positions of the hits for convenience
-        positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in fiber_hits])
-    
-        ## first do a check on the number of neighbours of each hit, discard ones with too few
-        ## this speeds up algorithm as we don't want to consider things that are clearly not peaks
-        _, fiber_neighbour_indices = self._neighbour_algo.fit(positions).radius_neighbors(positions)
-        considered_hits = [fiber_hits[i] for i in range(len(fiber_hits)) if fiber_neighbour_indices[i].shape[0] > self._min_n_neighbours]
-
-        print(f"  - LAPLACE FIT: n {u}{v} fibers passing N neighbours cut: {len(considered_hits)}")
-
-        if len(considered_hits) == 0:
-            return []
-        
-        ## now apply condition on the charge in the fiber
-        peak_candidates = [hit for hit in considered_hits if hit.weight > self._peak_candidate_threshold]
-
-        print(f"  - LAPLACE FIT: n {u}{v} peak candidate fibers: {len(peak_candidates)}")
-
-        if len(peak_candidates) == 0:
-            return []
-
-        ## now do the fit fit
-        try:
-            laplace_amplitudes = self._fit_laplace(
-                considered_hits,
-                peak_candidates,
-                u,
-                v
-            )
-
-        ## fit might fail for whatever reason, but we don't want that to bring the whole thing crashing down
-        except scipy.optimize.OptimizeWarning:
-            return []
-        except RuntimeError:
-            return []
-        
-        return [peak_candidates[i] for i in range(len(peak_candidates)) if laplace_amplitudes[i] > self._amplitude_threshold]
-
-    def _fit_laplace(
-            self, 
-            hits:typing.List['Hit2D'],
-            peak_candidates:typing.List['Hit2D'],
-            u:str,
-            v:str,
-        ) -> typing.List[float]:
-        """Performs the fit of the laplace distributions
-
-        :param hits: The hits that should be considered in the fit
-        :type hits: typing.List['Hit2D'] 
-        :param peak_candidates: The hits that should be considered peak candidates
-        :type peak_candidates: typing.List['Hit2D'] 
-        :param u: The u direction, should be "x", "y" or "z"
-        :type u: str
-        :param v: The v direction, should be "x", "y" or "z"
-        :type v: str
-        :return: The fitted laplace amplitudes of all peak candidate fibers
-        :rtype: typing.List[float]
-        """
-
-        fiber_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in hits])
-        peak_candidate_positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in peak_candidates])
-        
-        ## now get neighbours of the peak candidates
-        neighbour_distances, neighbour_indices = self._neighbour_algo.fit(peak_candidate_positions).radius_neighbors(fiber_positions)
-        charges = np.array([hit.weight for hit in hits])
-
-        laplace_fn, p0 = self._get_laplace_fn(
-            fiber_positions, 
-            charges, 
-            neighbour_distances, 
-            neighbour_indices
-        )
-
-        optimal_params, cov_mat = curve_fit(laplace_fn, xdata=None, ydata=charges, p0=p0, bounds=(0.0, np.inf))
-
-        print(f"Optimal params: {optimal_params.shape} \n{optimal_params.tolist()}")
-
-        weights = laplace_fn(None, *optimal_params.tolist())
-
-        fig, axs = plt.subplots(3,1)
-        
-        if self._make_plots:
-            h, x_bins, y_bins, _ = axs[0].hist2d(
-                fiber_positions[:, 0], fiber_positions[:, 1], 
-                weights = charges, bins=(20, 20), 
-                cmap=plt.get_cmap("coolwarm"),
-                vmax=self._peak_candidate_threshold
-            )
-
-            mappable = axs[1].hist2d(
-                fiber_positions[:, 0], fiber_positions[:, 1], 
-                weights = weights, bins=(20, 20), 
-                cmap=plt.get_cmap("coolwarm"), 
-                vmax=self._peak_candidate_threshold
-            )
-            
-            fig.colorbar(mappable[3], ax=axs)
-            
-            axs[2].hist2d(
-                [fiber_positions[i, 0] for i in range(len(charges)) if charges[i] > self._peak_candidate_threshold], 
-                [fiber_positions[i, 1] for i in range(len(charges)) if charges[i] > self._peak_candidate_threshold], 
-                weights = optimal_params.tolist()[:-1], 
-                bins=(x_bins, y_bins), 
-                cmap=plt.get_cmap("coolwarm"),
-                #cmin = 0.0001,
-                vmax = self._peak_candidate_threshold
-            )
-
-            self._pdf.savefig(fig)
-
-            plt.clf()
-
-            plt.scatter([charge for charge in charges if charge > self._peak_candidate_threshold], optimal_params[:-1])
-            self._pdf.savefig(fig)
-            plt.close(fig)
-
-        return optimal_params.tolist()[:-1]
-    
-    def _get_laplace_fn(
-            self, 
-            fiber_positions:np.ndarray, 
-            fiber_charges:np.ndarray, 
-            neighbour_distances:np.array, 
-            neighbour_indices:typing.List[np.array],
-        ) -> typing.Callable:
-        """Construct the ensemble of laplace functions used for fitting
-
-        :param fiber_positions: Positions of all of the fibers included in the fit
-        :type fiber_positions: np.ndarray
-        :param fiber_charges: Measured charges for all fibers included in the fit
-        :type fiber_charges: np.ndarray
-        :param neighbour_distances: The distances from all fibers to the peak candidates
-        :type neighbour_distances: np.array
-        :param neighbour_indices: The indices indicating which peak candidate fibers contribute to the light in each fiber
-        :type neighbour_indices: np.array
-        :return: Function that predicts charges in fibers, can then be used in fit.
-        :rtype: typing.Callable
-        """
-
-        N_FIBERS = len(fiber_positions)
-        
-        peak_candidates = [i for i in range(N_FIBERS) if fiber_charges[i] > self._peak_candidate_threshold]
-
-        N_PEAK_CANDIDATES = len(peak_candidates)
-
-        p0 = [2.0 * fiber_charges[i] for i in range(N_PEAK_CANDIDATES)]
-        p0.append(1.0) # <- the width param
-
-        def _laplace_fn(x_data=None, *params, fix_width:float=self._fix_width):
-
-            amplitudes = np.array(params[:N_PEAK_CANDIDATES])
-
-            if fix_width is None:
-                width      = params[N_PEAK_CANDIDATES]
-            else:
-                width = fix_width
-
-            ret_charges = np.zeros(N_FIBERS)
-
-            for fiber_index in range(N_FIBERS):
-                    
-                    neighbour_amplitudes = amplitudes[neighbour_indices[fiber_index]]
-
-                    l = neighbour_amplitudes * laplace.pdf( neighbour_distances[fiber_index] / width ) / width
-
-                    ret_charges[fiber_index] = np.sum(l)
-
-            return ret_charges
-
-        return _laplace_fn, p0
-
+from liquidreco.geometry import GeometryManager
 
 class PeakFinder2D(ModuleBase):
     """Finds peaks in raw fiber hits and performs position corrections
@@ -280,24 +39,15 @@ neighbourhood.
             "x_fiber_hits", "y_fiber_hits", "z_fiber_hits",
             "x_peak_hits", "y_peak_hits", "z_peak_hits",
             "unused_x_hits", "unused_y_hits", "unused_z_hits",
-            "laplace_x_peaks", "laplace_y_peaks", "laplace_z_peaks"
         ]
 
     def _initialise(self):
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-plots.pdf")
-        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("PeakFinder2D-unused-hit-cluster-plots.pdf")
-
-        self.DBSCAN_args = json.loads(self.args.DBSCAN_args)
-        self.laplace_fit_args = json.loads(self.args.laplace_fit_args)
-
-        self._clusterer = DBSCAN(**self.DBSCAN_args)
-        self._laplace_fitter = LaplaceFitter(**self.laplace_fit_args, make_plots=self.args._make_plots)
 
         self._peak_prominance_threshold = self.args.peak_prominance_threshold
         self._peak_candidate_weight_threshold = self.args.peak_candidate_weight_threshold
-        self._fit_blobs = self.args.fit_blobs
-        self._make_plots = self.args._make_plots
+        self._make_plots = self.args.make_plots
 
     def _setup_cli_options(self, parser):
         
@@ -307,38 +57,21 @@ neighbourhood.
             required = False, default = 1.0, type = float,
         )
         parser.add_argument(
-            "--peak_candidate_weight_threshold", 
+            "--peak-candidate-weight-threshold", 
             help="For a hit to be considered a peak candidate, it must have at least this weight.", 
             required = False, default = 0.0, type = float,
-        )
-        parser.add_argument(
-            "--fit-blobs", 
-            help="Whether we should try to fit peaks in the hits left over from the initial simple peak finding pass.", 
-            action='store_true'
         )
         parser.add_argument(
             "--make-plots", 
             help="Whether to make debug plots.", 
             action='store_true'
         )
-        ## Note these are passed as a string but will later be converted to dictionaries
-        parser.add_argument(
-            "--DBSCAN-args", 
-            help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
-            required = False, default = "{\"eps\": 10.5}", type = str
-        )
-        parser.add_argument(
-            "--laplace_fit_args", 
-            help="parameters to pass to the :class:`LaplaceFitter` that is used to fit peaks in blobs", 
-            required = False, default = "{}", type = str
-        )
         
     def _finalise(self):
         """Tidy up and close open pdfs
         """
+
         self._pdf.close()
-        self._cluster_pdf.close()
-        self._laplace_fitter.finalise()
 
     def _process(self, event: Event) -> None:
         """Perform the peak finding
@@ -355,10 +88,6 @@ neighbourhood.
         y_peak_hits = list()
         z_peak_hits = list()
 
-        laplace_x_peak_hits = list()
-        laplace_y_peak_hits = list()
-        laplace_z_peak_hits = list()
-
         x_used = set()
         y_used = set()
         z_used = set()
@@ -368,10 +97,9 @@ neighbourhood.
         z_unused = set()
 
         ## this is vile :(
-        for fiber_hits, peak_hits, laplace_peak_hits, used, unused in zip(
+        for fiber_hits, peak_hits, used, unused in zip(
             [x_fiber_hits, y_fiber_hits, z_fiber_hits],
             [x_peak_hits, y_peak_hits, z_peak_hits],
-            [laplace_x_peak_hits, laplace_y_peak_hits, laplace_z_peak_hits],
             [x_used, y_used, z_used],
             [x_unused, y_unused, z_unused],
         ):
@@ -380,7 +108,7 @@ neighbourhood.
                 continue
             
             if fiber_hits is x_fiber_hits:
-                u, v = "y", "z"
+                u, v = "z", "y"
             elif fiber_hits is y_fiber_hits:
                 u, v = "x", "z"
             elif fiber_hits is z_fiber_hits:
@@ -395,16 +123,6 @@ neighbourhood.
                 used.add(used_hit)
             for unused_hit in _unused:
                 unused.add(unused_hit)
-
-            if self._fit_blobs:
-                ## try and fit the unused hits
-                unused_clusters = self._cluster_hits(list(_unused), u, v)
-                print(f"N {u}{v} clusters: {len(unused_clusters)}")
-                for cluster in unused_clusters:
-                    _laplace_peaks = self._laplace_fitter(cluster, u, v)
-                
-                    for p in _laplace_peaks:
-                        laplace_peak_hits.append(p)
 
         ### make plot of the hits, colour coded depending on if they have been used
         if self._make_plots:
@@ -438,15 +156,6 @@ neighbourhood.
                 colour_override="r"
             )
 
-            make_corner_plot_fiber_hits(
-                fig,
-                axs, 
-                laplace_x_peak_hits ,
-                laplace_y_peak_hits,
-                laplace_z_peak_hits,
-                colour_override="m"
-            )
-
             self._pdf.savefig(fig)
             plt.close(fig)
 
@@ -458,10 +167,6 @@ neighbourhood.
         event.add_data("unused_x_hits", x_unused)
         event.add_data("unused_y_hits", y_unused)
         event.add_data("unused_z_hits", z_unused)
-        
-        event.add_data("laplace_x_peaks", laplace_x_peak_hits)
-        event.add_data("laplace_y_peaks", laplace_y_peak_hits)
-        event.add_data("laplace_z_peaks", laplace_z_peak_hits)
 
         event.add_data("x_fiber_hits", x_peak_hits)
         event.add_data("y_fiber_hits", y_peak_hits)
@@ -469,63 +174,17 @@ neighbourhood.
 
         return
             
-    def _cluster_hits(
-        self,
-        fiber_hits:typing.List['Hit2D'],
-        u:str, v:str,
-    ) -> typing.List[typing.List['Hit2D']]:
-        """Cluster hits using this PeakFinder2Ds _clusterer (default is DBSCAN but you can set it to whatever you want)
-
-        :param fiber_hits: The hits to cluster
-        :type fiber_hits: typing.List['Hit2D']
-        :param u: the "u" direction, should be 'x', 'y' or 'z' depending on the projection
-        :type u: str
-        :param v:  the "v" direction, should be 'x', 'y' or 'z' depending on the projection
-        :type v: str
-        :return: hits broken down into clusters
-        :rtype: typing.List[typing.List['Hit2D']]
-        """
-        
-        positions = np.array([[getattr(hit, u), getattr(hit, v)] for hit in fiber_hits])
-        cluster_ids = self._clusterer.fit_predict(positions)
-
-        if self._make_plots:
-            fig, ax = plt.subplots()
-            if u == "y" and v == "z":
-                ax.scatter(positions[:, 1], positions[:, 0], c = cluster_ids)
-                ax.set_title(f"{v}{u} unused hit clusters")
-                ax.set_xlabel(f"{v} [mm]")
-                ax.set_ylabel(f"{u} [mm]")
-
-            else:
-                ax.scatter(positions[:, 1], positions[:, 0], c = cluster_ids)
-                ax.set_title(f"{u}{v} unused hit clusters")
-                ax.set_xlabel(f"{u} [mm]")
-                ax.set_ylabel(f"{v} [mm]")
-
-            self._cluster_pdf.savefig(fig)
-            plt.close(fig)
-
-        clusters = list()
-
-        for id in np.unique(cluster_ids):
-            ## -1 indicates "noise" cluster
-            if id == -1:
-                continue
-
-            cluster = [fiber_hits[i] for i in np.where(cluster_ids == id)[0]]
-            clusters.append(cluster)
-
-        return clusters
-        
     def _find_2d_peaks(
             self,
             fiber_hits:typing.List['Hit2D'], 
             u:str, v:str,
-            neighbourhood_dist:float = 15.1, extended_neighbourhood_dist:float = 30.1,
-            u_pitch:float=10.0, v_pitch:float=10.0
+            neighbourhood_dist:float = 15.1, extended_neighbourhood_dist:float = 30.1
         ) -> typing.Tuple[typing.List['Hit2D'], typing.Set['Hit2D'], typing.Set['Hit2D']]:
         
+        ## get pitches in each direction
+        u_pitch = GeometryManager().get_pitch(u)
+        v_pitch = GeometryManager().get_pitch(v)
+
         # keep track of what hits have been used and what havent
         # initialise the unused set to all the input hits, will move them across as we go
         used_hits = set()
@@ -591,14 +250,14 @@ neighbourhood.
 
             ## If it's not already a peak, check if it's a diagonal peak
             if not is_peak:
-                diag_uv_line_hits = self._get_diagonal_neighbours(hit, neighbourhood, u, v, u_pitch, v_pitch)
-                diag_vu_line_hits = self._get_diagonal_neighbours(hit, neighbourhood, u, v, u_pitch, v_pitch, diagonal_sign=-1)
+                diag_uv_line_hits = self._get_diagonal_neighbours(hit, neighbourhood, u, v)
+                diag_vu_line_hits = self._get_diagonal_neighbours(hit, neighbourhood, u, v, diagonal_sign=-1)
 
                 diag_uv_line_charges = np.array([neighbour.weight for neighbour in diag_uv_line_hits])
                 diag_vu_line_charges = np.array([neighbour.weight for neighbour in diag_vu_line_hits])
 
-                extended_diag_uv_line_hits = self._get_diagonal_neighbours(hit, extended_neighbourhood, u, v, u_pitch, v_pitch)
-                extended_diag_vu_line_hits = self._get_diagonal_neighbours(hit, extended_neighbourhood, u, v, u_pitch, v_pitch, diagonal_sign=-1)
+                extended_diag_uv_line_hits = self._get_diagonal_neighbours(hit, extended_neighbourhood, u, v)
+                extended_diag_vu_line_hits = self._get_diagonal_neighbours(hit, extended_neighbourhood, u, v, diagonal_sign=-1)
 
                 if np.sum(diag_uv_line_charges < modified_charge) >= 2:
                     is_peak = True
@@ -737,8 +396,7 @@ neighbourhood.
             self, 
             hit:'Hit2D', 
             neighbourhood:typing.List['Hit2D'], 
-            u:str, v:str, 
-            u_pitch:float, v_pitch:float, 
+            u:str, v:str,
             diagonal_sign = +1
         ) -> typing.List['Hit2D']:
         """Gets neighbours of a hit along a diagonal line
@@ -751,15 +409,15 @@ neighbourhood.
         :type u: str
         :param v: the v direction, should be either "x", "y" or "z"
         :type v: str
-        :param u_pitch: fiber pitch in the u direction
-        :type u_pitch: float
-        :param v_pitch: fiber pitch in the v direction
-        :type v_pitch: float
         :param diagonal_sign: The gradient of the diagonal, defaults to +1
         :type diagonal_sign: int, optional
         :return: Hits from the neighbourhood that lie along the specified diagonal
         :rtype: typing.List['Hit2D']
         """
+
+        ## get pitches in each direction
+        u_pitch = GeometryManager().get_pitch(u)
+        v_pitch = GeometryManager().get_pitch(v)
 
         ret_list = list()
         for neighbour in neighbourhood:
@@ -791,8 +449,6 @@ class HesseRidgeDetection2D(ModuleBase):
         ]
 
     def _initialise(self) -> None:
-        
-        self._pitch = self.args.pitch
 
         self._min_charge = self.args.min_charge
         self._max_pos_curvature = self.args.max_positive_curvature
@@ -810,13 +466,7 @@ class HesseRidgeDetection2D(ModuleBase):
             self._pdf = matplotlib.backends.backend_pdf.PdfPages(self.args.plot_file_name)
 
     def _setup_cli_options(self, parser):
-
-        ## TODO: Make geometry manager class to store this kind of thing
-        parser.add_argument(
-            "--pitch", 
-            help="The fiber pitch", 
-            required = False, default = 10.0, type = float,
-        )
+        
         parser.add_argument(
             "--min-charge", 
             help="The minimum charge that a hit must have to be considered a peak hit", 
@@ -1012,8 +662,11 @@ class HesseRidgeDetection2D(ModuleBase):
             u_values = [getattr(hit, u_name) for hit in fiber_hits]
             v_values = [getattr(hit, v_name) for hit in fiber_hits]
 
-            u_bins = np.arange(start=min(u_values) - 3.0 * self._pitch / 2.0, stop=max(u_values) + 5.0 * self._pitch / 2.0, step = self._pitch) 
-            v_bins = np.arange(start=min(v_values) - 3.0 * self._pitch / 2.0, stop=max(v_values) + 5.0 * self._pitch / 2.0, step = self._pitch) 
+            u_pitch = GeometryManager().get_pitch(u_name)
+            v_pitch = GeometryManager().get_pitch(v_name)
+
+            u_bins = np.arange(start=min(u_values) - 3.0 * u_pitch / 2.0, stop=max(u_values) + 5.0 * u_pitch / 2.0, step = u_pitch) 
+            v_bins = np.arange(start=min(v_values) - 3.0 * v_pitch / 2.0, stop=max(v_values) + 5.0 * v_pitch / 2.0, step = v_pitch) 
 
             hist, _, _ = np.histogram2d(
                 u_values, v_values,
@@ -1233,8 +886,6 @@ class HesseRidgeDetection3D(ModuleBase):
         ]
 
     def _initialise(self) -> None:
-        
-        self._pitch = self.args.pitch
 
         self._min_charge = self.args.min_charge
         self._max_pos_curvature = self.args.max_positive_curvature
@@ -1253,12 +904,6 @@ class HesseRidgeDetection3D(ModuleBase):
 
     def _setup_cli_options(self, parser):
 
-        ## TODO: Make geometry manager class to store this kind of thing
-        parser.add_argument(
-            "--pitch", 
-            help="The fiber pitch", 
-            required = False, default = 10.0, type = float,
-        )
         parser.add_argument(
             "--min-charge", 
             help="The minimum charge that a hit must have to be considered a peak hit", 
@@ -1432,9 +1077,13 @@ class HesseRidgeDetection3D(ModuleBase):
         v_values = [hit.y for hit in hits]
         w_values = [hit.z for hit in hits]
 
-        u_bins = np.arange(start=min(u_values) - 3.0 * self._pitch / 4.0, stop=max(u_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
-        v_bins = np.arange(start=min(v_values) - 3.0 * self._pitch / 4.0, stop=max(v_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
-        w_bins = np.arange(start=min(w_values) - 3.0 * self._pitch / 4.0, stop=max(w_values) + 5.0 * self._pitch / 4.0, step = self._pitch / 2.0) 
+        u_pitch = GeometryManager().get_pitch(u)
+        v_pitch = GeometryManager().get_pitch(v)
+        w_pitch = GeometryManager().get_pitch(w)
+
+        u_bins = np.arange(start=min(u_values) - 3.0 * u_pitch / 4.0, stop=max(u_values) + 5.0 * u_pitch / 4.0, step = u_pitch / 2.0) 
+        v_bins = np.arange(start=min(v_values) - 3.0 * v_pitch / 4.0, stop=max(v_values) + 5.0 * v_pitch / 4.0, step = v_pitch / 2.0) 
+        w_bins = np.arange(start=min(w_values) - 3.0 * w_pitch / 4.0, stop=max(w_values) + 5.0 * w_pitch / 4.0, step = w_pitch / 2.0) 
 
         hist, _ = np.histogramdd(
             (u_values, v_values, w_values),
