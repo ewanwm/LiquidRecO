@@ -5,6 +5,7 @@ import numpy as np
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.event import Event
 from liquidreco.hit import Hit, Hit2D, Hit3D
+from liquidreco.geometry import GeometryManager
 
 class HitBuilder2D(ModuleBase):
     """Absolute base level module to build 2D hits from raw hit information
@@ -22,31 +23,12 @@ class HitBuilder2D(ModuleBase):
         self.requirements = ["raw_positions", "raw_weights", "raw_times"]
         self.outputs = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
 
-    def _setup_cli_options(self, parser):
-
-        parser.add_argument(
-            "--x-fiber-x-pos", 
-            help="The x position that x fibers have", 
-            required = False, default = 0.0, type = float,
-        )
-        parser.add_argument(
-            "--y-fiber-y-pos", 
-            help="The y position that y fibers have", 
-            required = False, default = 30.0, type = float,
-        )
-        parser.add_argument(
-            "--z-fiber-z-pos", 
-            help="The z position that z fibers have", 
-            required = False, default = 910.0, type = float,
-        )
-
     def _initialise(self):
         
-        ## TODO: use some geometry manager class to handle this sort of thing
         ## The positions that define fibers in each direction
-        self.x_fiber_x_pos: float = self.args.x_fiber_x_pos
-        self.y_fiber_y_pos: float = self.args.y_fiber_y_pos
-        self.z_fiber_z_pos: float = self.args.z_fiber_z_pos
+        self.x_fiber_x_pos: float = GeometryManager().x_fiber_x_pos()
+        self.y_fiber_y_pos: float = GeometryManager().y_fiber_y_pos()
+        self.z_fiber_z_pos: float = GeometryManager().z_fiber_z_pos()
 
     def _process(self, event: Event) -> None:
 
@@ -161,11 +143,6 @@ class HitBuilder3D(ModuleBase):
             required = False, default = True, type = bool
         )
         parser.add_argument(
-            "--pitch", 
-            help="The distance between fibers in each direction", 
-            required = False, default = (10, 10, 10), nargs=3
-        )
-        parser.add_argument(
             "--min-2d-hit-weight", 
             help="The minimum weight a 2D fiber hit must have to be considered when building 3D hits", 
             required = False, default = 0.0, type = float
@@ -189,11 +166,15 @@ class HitBuilder3D(ModuleBase):
     def _initialise(self):
         
         self.require_3_fibers: bool = self.args.require_3_fibers
-        self.pitch: typing.Tuple[float] = self.args.pitch
         self.min_2d_hit_weight: float = self.args.min_2d_hit_weight
         self.n_required_peaks: int = self.args.n_required_peaks
         self.max_weighted_distance: float = self.args.max_weighted_distance
         self.max_dir_diff: float = self.args.max_dir_diff
+        self.pitch: typing.Tuple[float] = (
+            GeometryManager().get_pitch("x"),
+            GeometryManager().get_pitch("y"),
+            GeometryManager().get_pitch("z")
+        )
 
     def _process(self, event: Event) -> None:
         

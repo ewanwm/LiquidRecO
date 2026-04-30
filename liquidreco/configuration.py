@@ -3,6 +3,7 @@ import json
 
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.modules.module_list import ModuleList
+from liquidreco.geometry import GeometryManager
 
 from jsonargparse import ArgumentParser, Namespace, ActionConfigFile, dict_to_namespace, namespace_to_dict
 
@@ -30,6 +31,7 @@ class Configuration:
         self._base_parser = None
         self._fit_parser = None
         self._make_config_parser = None
+        self._make_geometry_parser = None
         self._setup_parser()
 
         ## the instances of the modules to run
@@ -39,6 +41,7 @@ class Configuration:
         self.base_args = None
         self.fit_args = None
         self.make_config_args = None
+        self.make_geometry_config_args = None
 
     def _setup_parser(self) -> None:
         """Set up the base argument parser - the one that deals with everything that isn't
@@ -53,10 +56,12 @@ class Configuration:
         ## set up the sub parsers for each command
         self._setup_fit_parser()
         self._setup_make_config_parser()
+        self._setup_geometry_parser()
     
         ## add the commands
         command_subparsers.add_subcommand("fit", parser = self._fit_parser, help="Do reconstruction on events with a specified list of modules (do liquidreco fit --help to see the list of available modules")
         command_subparsers.add_subcommand("make-config", parser = self._make_config_parser, help="Create a json config file that can be passed to the 'fit' command. Specify the modules to run from the list of available ones. (do liquidreco make-config --help to see them)")
+        command_subparsers.add_subcommand("make-geometry-config", parser = self._make_geometry_parser, help="Create a json config file describing the detector geometry that can be passed to either the make-config or fit commands via the -g option")
 
         ## add module list to each subparser for purpose of nice help message
         self._add_module_subparsers(self._fit_parser)
@@ -75,6 +80,11 @@ class Configuration:
         self._make_config_parser.add_argument(
             "--file", "-f", 
             help="The file to output the configuration to", 
+            required=True, type=str
+        )
+        self._make_config_parser.add_argument(
+            "--geometry", "-g", 
+            help="JSON file describing the detector geometry (generated using the liquidreco make-geometry-config command)", 
             required=True, type=str
         )
 
@@ -106,6 +116,11 @@ class Configuration:
             required=False, type=str
         )
         self._fit_parser.add_argument(
+            "--geometry", "-g", 
+            help="JSON file describing the detector geometry (generated using the liquidreco make-geometry-config command)", 
+            required=False, type=str
+        )
+        self._fit_parser.add_argument(
             "--n-events", "-n", 
             help="The number of events to process. If not specified then all will be processed", 
             default = None, required=False, type=int
@@ -115,6 +130,33 @@ class Configuration:
             help="read fit configuration from a config file. If specified, all module commands and arguments will be ignored", 
             default=None, required=False, type=str
         )
+
+    def _setup_geometry_parser(self):
+        """Set up the parser that deals with geometry arguments
+
+        Will set the _geometry_parser member variable
+        """
+
+        ## first set up the parser for the make-geometry command
+
+        ## TODO: add detailed description using description="blabla" argument
+        self._make_geometry_parser = ArgumentParser(
+            "make-geometry"
+        )
+
+        ## add the geometry arguments
+        GeometryManager().setup_cli_options(self._make_geometry_parser)
+
+        ## add the output file argument
+        self._make_geometry_parser.add_argument(
+            "--file", "-f", 
+            help="The file to output the configuration to", 
+            required=True, type=str
+        )
+
+        ## now set up the parser for just geometry argumets
+        _geometry_parser = ArgumentParser("geometry")
+        GeometryManager().setup_parser(_geometry_parser)
         
 
     def _add_module_subparsers(self, parser: ArgumentParser):
@@ -186,6 +228,11 @@ class Configuration:
 
         assert "modules" in json_config.keys(), "Did not find 'modules' key in config file!! Is this really a liquidreco config file????"
 
+        assert "geometry" in json_config.keys(), "Did not find 'geometry' key in config file!! Is this really a liquidreco config file????"
+        
+        ## parse the geometry part of the config file
+        GeometryManager().parse_object(json_config["geometry"])
+            
         ## get the dict defining the config for each module and parse it 
         for module_json in json_config["modules"]:
 
@@ -224,7 +271,12 @@ class Configuration:
                 }
             )
 
-        return {"modules": module_jsons}
+        geometry_arg_dict = namespace_to_dict(GeometryManager().args)
+
+        return {
+            "geometry": geometry_arg_dict,
+            "modules": module_jsons
+        }
 
     def parse_args(self, args: typing.List[str]) -> None:
         """Parse list of arguments  
@@ -245,11 +297,27 @@ class Configuration:
             self.fit_args = self.base_args["fit"]
         if self.base_args.command == "make-config":
             self.make_config_args = self.base_args["make-config"]
+        if self.base_args.command == "make-geometry-config":
+            self.make_geometry_config_args = self.base_args["make-geometry-config"]
 
-        ## if -c option specified, parse the module options from config file
-        if self.fit_args is not None and self.fit_args.config is not None:
+        if self.fit_args is not None:
 
-            self._parse_json_config(self.fit_args.config)
+            ## if -c option specified, parse the module options from config file
+            if self.fit_args.config is not None:
+
+                self._parse_json_config(self.fit_args.config)
+
+            ## otherwise we need to parse the geometry file 
+            else:
+
+                if self.fit_args.geometry is None:
+
+                    raise ValueError("Did not provide a geometry file via -g option, I need this :( (unless you run with -c option)")
+                
+                with open(self.fit_args.geometry, "r") as geometry_file:
+                    
+                    json_geometry = json.load(geometry_file)
+                    GeometryManager().parse_object(json_geometry)
 
         ## parse the args for each module and set up the list of modules to be applied
         for module_command, module_args in zip(self._commands, self._raw_args[1:]):
@@ -263,9 +331,34 @@ class Configuration:
 
             self.modules.append(module_inst)
 
+        ## if we are just making geometry config file, dump the json then exit
+        if self.make_geometry_config_args is not None:
+
+            ## strip the "file" option
+            geom_args = Namespace(self.make_geometry_config_args)
+            geom_args.pop("file")
+
+            GeometryManager().consume_args(geom_args)
+
+            geometry_arg_dict = namespace_to_dict(GeometryManager().args)
+            
+            with open(self.make_geometry_config_args.file, "w") as file:
+                json.dump(
+                    geometry_arg_dict,
+                    file,
+                    indent=4, sort_keys=True
+                )
+
+            exit(0)
+
         ## if we are just making config file, dump the json then exit
         if self.make_config_args is not None:
-
+            
+            with open(self.make_config_args.geometry, "r") as geometry_file:
+                
+                json_geometry = json.load(geometry_file)
+                GeometryManager().parse_object(json_geometry)
+ 
             with open(self.make_config_args.file, "w") as file:
                 json.dump(
                     self.to_json(),
