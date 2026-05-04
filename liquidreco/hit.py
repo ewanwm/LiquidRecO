@@ -59,7 +59,7 @@ class Hit:
         is_peak = (False, False, False)
     ):
         
-        self.pos = position
+        self.set_position(position)
         """position of the hit"""
         self.x = self.pos[0]
         """x position of the hit"""
