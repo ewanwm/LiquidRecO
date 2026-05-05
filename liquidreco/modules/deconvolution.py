@@ -16,6 +16,7 @@ import torch
 from torch import Tensor, tensor
 from torch.nn.functional import conv2d, pad
 from torch.nn import PoissonNLLLoss, MSELoss, L1Loss
+from torch.optim import Adam
 
 from liquidreco.hit import Hit, Hit2D, Hit3D
 from liquidreco.modules.module_base import ModuleBase
@@ -764,8 +765,12 @@ class Deconv2D(ModuleBase):
         print(f'kernel shape: {kernel.shape}')
 
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
+        optimiser = Adam(params = [pixel_tensor], lr = 1.0)
         
-        for lr in [2500]:
+        for lr in [1.0]:
+
+            optimiser.lr = lr
+            
             print(f'##### LR = {lr} #####')
 
             for step in range (self._n_steps):
@@ -776,11 +781,12 @@ class Deconv2D(ModuleBase):
                 
                 loss.backward()
 
-                pixel_tensor.requires_grad = False
-                pixel_tensor -= pixel_tensor.grad * lr
-                pixel_tensor = torch.clip(pixel_tensor, 0.0)
-                pixel_tensor.requires_grad = True
+                optimiser.step()
+                optimiser.zero_grad()
 
+                with torch.no_grad():
+                    pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
+                
                 if step % int(m.floor(self._n_steps / 10)) == 0:
                     print(f'  - step: {step} :: loss: {loss}')
 
