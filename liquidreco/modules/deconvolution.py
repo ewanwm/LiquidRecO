@@ -825,3 +825,362 @@ class Deconv2D(ModuleBase):
 
         return pixel_tensor, u_pixel_positions, v_pixel_positions
     
+
+
+
+
+class Deconv3D(ModuleBase):
+    """Performs a deconvolution from fiber hits to light deposited in detector "voxels" in 3D
+    """
+
+    def __init__(
+        self,
+    ):
+        """Initialiser
+        """
+
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+        self.outputs = [
+            "3d_hits"
+        ]
+
+    def _initialise(self):
+        
+        self._amplitude_threshold = self.args.amplitude_threshold
+        self._make_plots = self.args.make_plots
+        self._kernel_size = self.args.kernel_size
+        self._pixel_divisions = self.args.pixel_divisions
+        self._laplace_width = self.args.laplace_width
+        self._n_steps = self.args.n_steps
+
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv3D-plots.pdf")
+        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv3D-cluster-plots.pdf")
+
+        ## make kernels once here so we don't have to do it for every event
+        self._kernels: typing.Dict[str, Tensor] = {
+            "yz": self._make_kernel("y", "z"),
+            "xz": self._make_kernel("x", "z"),
+            "xy": self._make_kernel("x", "y")
+        }
+    
+    def _setup_cli_options(self, parser):
+        
+        ## Note these are passed as a string but will later be converted to dictionaries
+        parser.add_argument(
+            "--make-plots", 
+            help="Whether to make debug plots.", 
+            action='store_true'
+        )
+        parser.add_argument(
+            "--amplitude-threshold", 
+            help="Fibers whose post-fit laplace distribution amplitude is above this are considered peak hits, defaults to 50.0", 
+            type=float,
+            required=False,
+            default=50.0
+        )
+        parser.add_argument(
+            "--n-steps", 
+            help="The number of iterations to run the optimiser for. defaults to 20000", 
+            type=int,
+            required=False,
+            default=20000
+        )
+        parser.add_argument(
+            "--kernel-size", 
+            help="size of the convolution kernel in units of fiber pitch (kernel-size = 4 means kernel will span 4 fibers - 2 on either side of the central fiber)", 
+            type=int,
+            required=False,
+            default=6
+        )
+        parser.add_argument(
+            "--pixel-divisions", 
+            help="The number of 'pixels' to make between each fiber", 
+            type=int,
+            required=False,
+            default=2
+        )
+        parser.add_argument(
+            "--laplace-width", 
+            help="The width of the laplace distribution", 
+            type=float,
+            required=False,
+            default=7.0
+        )
+
+    def _finalise(self):
+
+        self._pdf.close()
+        self._cluster_pdf.close()
+
+    def _process(self, event):
+        
+        x_fiber_hits: typing.List['Hit2D'] = event["x_fiber_hits"]
+        y_fiber_hits: typing.List['Hit2D'] = event["y_fiber_hits"]
+        z_fiber_hits: typing.List['Hit2D'] = event["z_fiber_hits"]
+
+        hits_3d = list()
+            
+        ## try and fit the 2d hits
+        _hits = self._do_fit(x_fiber_hits, y_fiber_hits, z_fiber_hits)
+
+        for hit in _hits:
+            hits_3d.append(hit)
+
+        if self._make_plots:
+            pass
+
+        event.add_data("3d_hits", hits_3d)
+
+        return
+    
+    def _make_kernel(
+            self,
+            u:str, v:str
+        ) -> Tensor: 
+
+        assert (
+            (GeometryManager().get_pitch(u) == GeometryManager().get_pitch(v))
+        ), "Sorry, Deconv2D only supports uniform fiber grids at the moment (need pitch u == pitch v) :("
+
+        assert self._kernel_size %2 == 0, "Kernel size must be even!!!!"
+
+        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions)
+        pitch = GeometryManager().get_pitch("x")
+        pixel_width = pitch / self._pixel_divisions
+
+        np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
+
+        for i  in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
+            for j in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
+
+                kernel_i = int(kernel_size_pixels / 2 + i)
+                kernel_j = int(kernel_size_pixels / 2 + j)
+
+                distance = np.linalg.norm([(i + 0.5) * pixel_width, (j + 0.5) * pixel_width]) - 0.7 * pixel_width
+
+                weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
+
+                np_kernel[kernel_i, kernel_j] = weight
+                
+        fig = plt.figure()
+        plt.imshow(np_kernel)
+        plt.colorbar()
+
+        self._pdf.savefig(fig)
+        
+        return tensor(np_kernel)
+    
+    def _get_kernel(
+            self,
+            u:str, v:str
+        ) -> Tensor: 
+
+        return self._kernels[f'{u}{v}']
+
+    def _do_fit(
+        self,
+        x_fiber_hits: typing.List['Hit2D'], 
+        y_fiber_hits: typing.List['Hit2D'], 
+        z_fiber_hits: typing.List['Hit2D']
+    ) -> typing.Tuple[typing.List['Hit2D']]:
+        """Find peaks by attempting to fit laplace distributions to prominent fibers
+
+        :param x_fiber_hits: The x hits to fit to
+        :type fiber_hits: typing.List['Hit2D']
+        :param y_fiber_hits: The y hits to fit to
+        :type fiber_hits: typing.List['Hit2D']
+        :param z_fiber_hits: The z hits to fit to
+        :type fiber_hits: typing.List['Hit2D']
+        :return: Peak hits found by the fit
+        :rtype: typing.Tuple[typing.List['Hit2D']]
+        """
+        
+        ## now do the fit fit
+        pixel_tensor, u_pixel_positions, v_pixel_positions, w_pixel_positions = self._fit_laplace(
+            x_fiber_hits,
+            y_fiber_hits,
+            z_fiber_hits
+        )
+
+        hits = []
+        for i in range(pixel_tensor.shape[1]):
+            for j in range(pixel_tensor.shape[2]):
+                for k in range(pixel_tensor.shape[3]):
+
+                    if pixel_tensor[0, i, j, k] > self._amplitude_threshold:
+                        pos_temp = {"x": None, "y": None, "z": None}
+                        pos_temp["x"] = u_pixel_positions[i]
+                        pos_temp["y"] = v_pixel_positions[j]
+                        pos_temp["z"] = w_pixel_positions[k]
+                        hit_tmp = Hit3D(pos_temp, weight = pixel_tensor[0, i, j, k].detach().numpy())
+                        hits.append(hit_tmp)
+
+        return hits
+
+    def _fit_laplace(
+            self, 
+            x_hits:typing.List['Hit2D'],
+            y_hits:typing.List['Hit2D'],
+            z_hits:typing.List['Hit2D']
+        ) -> typing.Tuple[Tensor, typing.List[float], typing.List[float]]:
+        """Performs the fit of the laplace distributions
+
+        :param x_hits: The x hits that should be considered in the fit
+        :type hits: typing.List['Hit2D'] 
+        :param y_hits: The y hits that should be considered in the fit
+        :type hits: typing.List['Hit2D'] 
+        :param z_hits: The z hits that should be considered in the fit
+        :type hits: typing.List['Hit2D'] 
+        :return: The fitted laplace amplitudes of all peak candidate fibers
+        :rtype: typing.List[float]
+        """
+        
+        x_values = [getattr(hit, "x") for hit in [*y_hits, *z_hits]]
+        y_values = [getattr(hit, "y") for hit in [*x_hits, *z_hits]]
+        z_values = [getattr(hit, "z") for hit in [*x_hits, *y_hits]]
+
+        x_pitch = GeometryManager().get_pitch("x")
+        y_pitch = GeometryManager().get_pitch("y")
+        z_pitch = GeometryManager().get_pitch("z")
+
+        fiber_x_bins = np.arange(start=min(x_values) - 3.0 * x_pitch / 2.0, stop=max(x_values) + 5.0 * x_pitch / 2.0, step = x_pitch) 
+        fiber_y_bins = np.arange(start=min(y_values) - 3.0 * y_pitch / 2.0, stop=max(y_values) + 5.0 * y_pitch / 2.0, step = y_pitch) 
+        fiber_z_bins = np.arange(start=min(z_values) - 3.0 * z_pitch / 2.0, stop=max(z_values) + 5.0 * z_pitch / 2.0, step = z_pitch) 
+
+        x_fiber_hist, y_bins, z_bins = np.histogram2d(
+            [hit.y for hit in x_hits],
+            [hit.z for hit in x_hits],
+            weights=[hit.weight for hit in x_hits],
+            bins = (fiber_y_bins, fiber_z_bins)
+        )
+
+        y_fiber_hist, x_bins, z_bins = np.histogram2d(
+            [hit.x for hit in y_hits],
+            [hit.z for hit in y_hits],
+            weights=[hit.weight for hit in y_hits],
+            bins = (fiber_x_bins, fiber_z_bins)
+        )
+
+        z_fiber_hist, x_bins, y_bins = np.histogram2d(
+            [hit.x for hit in z_hits],
+            [hit.y for hit in z_hits],
+            weights=[hit.weight for hit in z_hits],
+            bins = (fiber_x_bins, fiber_y_bins)
+        )
+
+        x_fiber_tensor = tensor(x_fiber_hist)
+        y_fiber_tensor = tensor(y_fiber_hist)
+        z_fiber_tensor = tensor(z_fiber_hist)
+
+        pixel_tensor = tensor(
+            np.zeros(
+                (
+                    (fiber_x_bins.shape[0] - 1) * self._pixel_divisions, 
+                    (fiber_y_bins.shape[0] - 1) * self._pixel_divisions, 
+                    (fiber_z_bins.shape[0] - 1) * self._pixel_divisions
+                )
+            )
+        )
+        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
+        
+        x_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("y", "z"), 0), 0)
+        y_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "z"), 0), 0)
+        z_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "y"), 0), 0)
+    
+        padding = (
+            int(self._kernel_size * self._pixel_divisions / 2 - 1), 
+            int(self._kernel_size * self._pixel_divisions / 2),
+            int(self._kernel_size * self._pixel_divisions / 2 - 1), 
+            int(self._kernel_size * self._pixel_divisions / 2)
+        )
+
+        pixel_x_positions = np.arange(start=min(x_values) - 3.0 * x_pitch / 2.0, stop=max(x_values) + 5.0 * x_pitch / 2.0, step = x_pitch / self._pixel_divisions) 
+        pixel_y_positions = np.arange(start=min(y_values) - 3.0 * y_pitch / 2.0, stop=max(y_values) + 5.0 * y_pitch / 2.0, step = y_pitch / self._pixel_divisions) 
+        pixel_z_positions = np.arange(start=min(z_values) - 3.0 * z_pitch / 2.0, stop=max(z_values) + 5.0 * z_pitch / 2.0, step = z_pitch / self._pixel_divisions) 
+
+        pixel_tensor.requires_grad = True
+
+        print(f'x fiber_tensor shape: {x_fiber_tensor.shape}')
+        print(f'y fiber_tensor shape: {y_fiber_tensor.shape}')
+        print(f'z fiber_tensor shape: {z_fiber_tensor.shape}')
+        print(f'pixel_tensor shape: {pixel_tensor.shape}')
+        print(f'x kernel shape: {x_kernel.shape}')
+        print(f'y kernel shape: {y_kernel.shape}')
+        print(f'z kernel shape: {z_kernel.shape}')
+        print(f'x positions shape: {pixel_x_positions.shape}')
+        print(f'y positions shape: {pixel_y_positions.shape}')
+        print(f'z positions shape: {pixel_z_positions.shape}')
+
+        loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
+        optimiser = Adam(params = [pixel_tensor])
+        
+        for lr in [0.01, 0.001, 0.0001]:
+
+            optimiser.lr = lr
+
+            print(f'##### LR = {lr} #####')
+
+            for step in range (self._n_steps):
+
+                pixel_tensor.grad = None
+                
+                x_conv = conv2d(pad(torch.sum(pixel_tensor, dim=1), padding), x_kernel, stride = self._pixel_divisions)
+                y_conv = conv2d(pad(torch.sum(pixel_tensor, dim=2), padding), y_kernel, stride = self._pixel_divisions)
+                z_conv = conv2d(pad(torch.sum(pixel_tensor, dim=3), padding), z_kernel, stride = self._pixel_divisions)
+
+                x_loss = loss_fn(x_conv[0], x_fiber_tensor)
+                y_loss = loss_fn(y_conv[0], y_fiber_tensor)
+                z_loss = loss_fn(z_conv[0], z_fiber_tensor)
+
+                loss = tensor([0], dtype = torch.double)
+
+                loss += x_loss 
+                loss += y_loss
+                loss += z_loss
+                
+                loss.backward()
+                optimiser.step()
+                optimiser.zero_grad()
+                
+                with torch.no_grad():
+                    pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
+
+                if step % int(m.floor(self._n_steps / 10)) == 0:
+                    print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
+
+                step += 1
+
+        if self._make_plots:
+            
+            fig, axs = plt.subplots(3,1, figsize=(20, 60))
+
+            mappable = axs[0].imshow(
+                x_fiber_hist, 
+                cmap=plt.get_cmap("coolwarm")
+            )
+
+            fig.colorbar(mappable, ax=axs[0])
+
+            conv = conv2d(pad(torch.sum(pixel_tensor, 1), padding), x_kernel, stride = self._pixel_divisions)
+
+            mappable = axs[1].imshow(
+                conv.detach().numpy()[0, ...], 
+                cmap=plt.get_cmap("coolwarm")
+            )
+
+            fig.colorbar(mappable, ax=axs[1])
+
+            mappable = axs[2].imshow(
+                torch.sum(pixel_tensor.detach(), dim=1).numpy()[0, ...], 
+                cmap=plt.get_cmap("coolwarm")
+            )
+
+            fig.colorbar(mappable, ax=axs[2])
+
+            self._pdf.savefig(fig)
+
+            plt.clf()
+
+        return pixel_tensor, pixel_x_positions, pixel_y_positions, pixel_z_positions
+    
