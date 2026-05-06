@@ -418,28 +418,12 @@ class LaplaceFitter(ModuleBase):
             return ret_charges
 
         return _laplace_fn
+    
 
 
-class Deconv2D(ModuleBase):
-    """Performs a deconvolution from fiber hits to light deposited in detector "pixels" in 2D
-    """
-
-    def __init__(
-        self,
-    ):
-        """Initialiser
-        """
-
-        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
-
-        self.outputs = [
-            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits"
-        ]
+class DeconvBase(ModuleBase):
 
     def _initialise(self):
-
-        self.DBSCAN_args = json.loads(self.args.DBSCAN_args)
-        self._clusterer = DBSCAN(**self.DBSCAN_args)
         
         self._amplitude_threshold = self.args.amplitude_threshold
         self._make_plots = self.args.make_plots
@@ -448,8 +432,7 @@ class Deconv2D(ModuleBase):
         self._laplace_width = self.args.laplace_width
         self._n_steps = self.args.n_steps
 
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv2D-plots.pdf")
-        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv2D-cluster-plots.pdf")
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.__class__.__name__}-plots.pdf")
 
         ## make kernels once here so we don't have to do it for every event
         self._kernels: typing.Dict[str, Tensor] = {
@@ -457,15 +440,9 @@ class Deconv2D(ModuleBase):
             "xz": self._make_kernel("x", "z"),
             "xy": self._make_kernel("x", "y")
         }
-    
+
     def _setup_cli_options(self, parser):
-        
-        ## Note these are passed as a string but will later be converted to dictionaries
-        parser.add_argument(
-            "--DBSCAN-args", 
-            help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
-            required = False, default = "{\"eps\": 14.5}", type = str
-        )
+
         parser.add_argument(
             "--make-plots", 
             help="Whether to make debug plots.", 
@@ -505,6 +482,105 @@ class Deconv2D(ModuleBase):
             type=float,
             required=False,
             default=7.0
+        )
+
+    def _make_kernel(
+            self,
+            u:str, v:str
+        ) -> Tensor: 
+
+        assert (
+            (GeometryManager().get_pitch(u) == GeometryManager().get_pitch(v))
+        ), "Sorry, Deconv2D only supports uniform fiber grids at the moment (need pitch u == pitch v) :("
+
+        assert self._kernel_size %2 != 0, "Kernel size must be odd!!!!"
+
+        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions - 1)
+        pitch = GeometryManager().get_pitch(u)
+        pixel_width = pitch / self._pixel_divisions
+
+        np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
+
+        for i in range(-int(m.ceil(kernel_size_pixels / 2)) + 1, int(m.ceil(kernel_size_pixels / 2))):
+            for j in range(-int(m.ceil(kernel_size_pixels / 2)) + 1, int(m.ceil(kernel_size_pixels / 2))):
+
+                kernel_i = int(m.ceil(kernel_size_pixels / 2) - 1 + i)
+                kernel_j = int(m.ceil(kernel_size_pixels / 2) - 1 + j)
+
+                pixel_low_i = (i - 0.5) * pixel_width
+                pixel_high_i = (i + 0.5) * pixel_width
+
+                pixel_low_j = (j - 0.5) * pixel_width
+                pixel_high_j = (j + 0.5) * pixel_width
+
+                mean = 0.0
+                accum = 0
+
+                n_sub_pixels = 10
+                for sub_pixel_i in np.arange(pixel_low_i + pixel_width / n_sub_pixels, pixel_high_i, step = pixel_width / n_sub_pixels):
+                    
+                    for sub_pixel_j in np.arange(pixel_low_j + pixel_width / n_sub_pixels, pixel_high_j, step = pixel_width / n_sub_pixels):
+
+                        distance = np.linalg.norm([sub_pixel_i, sub_pixel_j])
+                        weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
+                        mean += weight
+
+                        accum += 1
+
+                np_kernel[kernel_i, kernel_j] = mean / float(accum)
+                
+        if self._make_plots:
+
+            fig = plt.figure()
+            plt.imshow(np_kernel)
+            plt.colorbar()
+
+            self._pdf.savefig(fig)
+        
+        return tensor(np_kernel)
+    
+    def _get_kernel(
+            self,
+            u:str, v:str
+        ) -> Tensor: 
+
+        return self._kernels[f'{u}{v}']
+
+
+class Deconv2D(DeconvBase):
+    """Performs a deconvolution from fiber hits to light deposited in detector "pixels" in 2D
+    """
+
+    def __init__(
+        self,
+    ):
+        """Initialiser
+        """
+
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+        self.outputs = [
+            "x_fiber_hits", "y_fiber_hits", "z_fiber_hits"
+        ]
+
+    def _initialise(self):
+
+        super()._initialise()
+
+        self.DBSCAN_args = json.loads(self.args.DBSCAN_args)
+        self._clusterer = DBSCAN(**self.DBSCAN_args)
+        
+        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv2D-cluster-plots.pdf")
+    
+    def _setup_cli_options(self, parser):
+        
+        super()._setup_cli_options(parser)
+
+        ## Note these are passed as a string but will later be converted to dictionaries
+        parser.add_argument(
+            "--DBSCAN-args", 
+            help="arguments to pass to the DBSCAN algorithm used to build 'blob' clusters.", 
+            required = False, default = "{\"eps\": 14.5}", type = str
         )
 
     def _finalise(self):
@@ -554,51 +630,6 @@ class Deconv2D(ModuleBase):
 
         return
     
-    def _make_kernel(
-            self,
-            u:str, v:str
-        ) -> Tensor: 
-
-        assert (
-            (GeometryManager().get_pitch(u) == GeometryManager().get_pitch(v))
-        ), "Sorry, Deconv2D only supports uniform fiber grids at the moment (need pitch u == pitch v) :("
-
-        assert self._kernel_size %2 == 0, "Kernel size must be even!!!!"
-
-        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions)
-        pitch = GeometryManager().get_pitch("x")
-        pixel_width = pitch / self._pixel_divisions
-
-        np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
-
-        for i  in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
-            for j in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
-
-                kernel_i = int(kernel_size_pixels / 2 + i)
-                kernel_j = int(kernel_size_pixels / 2 + j)
-
-                distance = np.linalg.norm([(i + 0.5) * pixel_width, (j + 0.5) * pixel_width]) - 0.7 * pixel_width
-
-                weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
-
-                np_kernel[kernel_i, kernel_j] = weight
-                
-        fig = plt.figure()
-        plt.imshow(np_kernel)
-        plt.colorbar()
-
-        self._pdf.savefig(fig)
-        
-        return tensor(np_kernel)
-    
-    def _get_kernel(
-            self,
-            u:str, v:str
-        ) -> Tensor: 
-
-        return self._kernels[f'{u}{v}']
-
-
     def _cluster_hits(
         self,
         fiber_hits:typing.List['Hit2D'],
@@ -767,7 +798,7 @@ class Deconv2D(ModuleBase):
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor], lr = 1.0)
         
-        for lr in [1.0]:
+        for lr in [0.01]:
 
             optimiser.lr = lr
             
@@ -824,12 +855,8 @@ class Deconv2D(ModuleBase):
             plt.clf()
 
         return pixel_tensor, u_pixel_positions, v_pixel_positions
-    
 
-
-
-
-class Deconv3D(ModuleBase):
+class Deconv3D(DeconvBase):
     """Performs a deconvolution from fiber hits to light deposited in detector "voxels" in 3D
     """
 
@@ -846,72 +873,16 @@ class Deconv3D(ModuleBase):
         ]
 
     def _initialise(self):
-        
-        self._amplitude_threshold = self.args.amplitude_threshold
-        self._make_plots = self.args.make_plots
-        self._kernel_size = self.args.kernel_size
-        self._pixel_divisions = self.args.pixel_divisions
-        self._laplace_width = self.args.laplace_width
-        self._n_steps = self.args.n_steps
 
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv3D-plots.pdf")
-        self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv3D-cluster-plots.pdf")
-
-        ## make kernels once here so we don't have to do it for every event
-        self._kernels: typing.Dict[str, Tensor] = {
-            "yz": self._make_kernel("y", "z"),
-            "xz": self._make_kernel("x", "z"),
-            "xy": self._make_kernel("x", "y")
-        }
+        super()._initialise()
     
     def _setup_cli_options(self, parser):
         
-        ## Note these are passed as a string but will later be converted to dictionaries
-        parser.add_argument(
-            "--make-plots", 
-            help="Whether to make debug plots.", 
-            action='store_true'
-        )
-        parser.add_argument(
-            "--amplitude-threshold", 
-            help="Fibers whose post-fit laplace distribution amplitude is above this are considered peak hits, defaults to 50.0", 
-            type=float,
-            required=False,
-            default=50.0
-        )
-        parser.add_argument(
-            "--n-steps", 
-            help="The number of iterations to run the optimiser for. defaults to 20000", 
-            type=int,
-            required=False,
-            default=20000
-        )
-        parser.add_argument(
-            "--kernel-size", 
-            help="size of the convolution kernel in units of fiber pitch (kernel-size = 4 means kernel will span 4 fibers - 2 on either side of the central fiber)", 
-            type=int,
-            required=False,
-            default=6
-        )
-        parser.add_argument(
-            "--pixel-divisions", 
-            help="The number of 'pixels' to make between each fiber", 
-            type=int,
-            required=False,
-            default=2
-        )
-        parser.add_argument(
-            "--laplace-width", 
-            help="The width of the laplace distribution", 
-            type=float,
-            required=False,
-            default=7.0
-        )
+        super()._setup_cli_options(parser)
 
     def _finalise(self):
 
         self._pdf.close()
-        self._cluster_pdf.close()
 
     def _process(self, event):
         
@@ -933,50 +904,6 @@ class Deconv3D(ModuleBase):
         event.add_data("3d_hits", hits_3d)
 
         return
-    
-    def _make_kernel(
-            self,
-            u:str, v:str
-        ) -> Tensor: 
-
-        assert (
-            (GeometryManager().get_pitch(u) == GeometryManager().get_pitch(v))
-        ), "Sorry, Deconv2D only supports uniform fiber grids at the moment (need pitch u == pitch v) :("
-
-        assert self._kernel_size %2 == 0, "Kernel size must be even!!!!"
-
-        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions)
-        pitch = GeometryManager().get_pitch("x")
-        pixel_width = pitch / self._pixel_divisions
-
-        np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
-
-        for i  in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
-            for j in range(-int(kernel_size_pixels / 2) + 1, int(kernel_size_pixels / 2)):
-
-                kernel_i = int(kernel_size_pixels / 2 + i)
-                kernel_j = int(kernel_size_pixels / 2 + j)
-
-                distance = np.linalg.norm([(i + 0.5) * pixel_width, (j + 0.5) * pixel_width]) - 0.7 * pixel_width
-
-                weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
-
-                np_kernel[kernel_i, kernel_j] = weight
-                
-        fig = plt.figure()
-        plt.imshow(np_kernel)
-        plt.colorbar()
-
-        self._pdf.savefig(fig)
-        
-        return tensor(np_kernel)
-    
-    def _get_kernel(
-            self,
-            u:str, v:str
-        ) -> Tensor: 
-
-        return self._kernels[f'{u}{v}']
 
     def _do_fit(
         self,
@@ -1090,9 +1017,9 @@ class Deconv3D(ModuleBase):
     
         padding = (
             int(self._kernel_size * self._pixel_divisions / 2 - 1), 
-            int(self._kernel_size * self._pixel_divisions / 2),
+            int(self._kernel_size * self._pixel_divisions / 2 - 1),
             int(self._kernel_size * self._pixel_divisions / 2 - 1), 
-            int(self._kernel_size * self._pixel_divisions / 2)
+            int(self._kernel_size * self._pixel_divisions / 2 - 1)
         )
 
         pixel_x_positions = np.arange(start=min(x_values) - 3.0 * x_pitch / 2.0, stop=max(x_values) + 5.0 * x_pitch / 2.0, step = x_pitch / self._pixel_divisions) 
@@ -1115,7 +1042,7 @@ class Deconv3D(ModuleBase):
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor])
         
-        for lr in [0.01, 0.001, 0.0001]:
+        for lr in [0.1]:
 
             optimiser.lr = lr
 
