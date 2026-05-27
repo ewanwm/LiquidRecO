@@ -799,7 +799,7 @@ class Deconv2D(DeconvBase):
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor], lr = 1.0)
         
-        for lr in [0.01]:
+        for lr in [0.1]:
 
             optimiser.lr = lr
             
@@ -807,7 +807,6 @@ class Deconv2D(DeconvBase):
 
             for step in range (self._n_steps):
 
-                pixel_tensor.grad = None
                 conv = conv2d(pad(pixel_tensor, padding), kernel, stride = self._pixel_divisions)
                 loss = loss_fn(conv, fiber_tensor)
                 
