@@ -822,8 +822,6 @@ class Deconv2D(DeconvBase):
                 if step % int(m.floor(self._n_steps / 10)) == 0:
                     print(f'  - step: {step} :: loss: {loss}')
 
-                step += 1
-
         if self._make_plots:
             
             fig, axs = plt.subplots(3,1, figsize=(20, 60))
@@ -1083,8 +1081,6 @@ class Deconv3D(DeconvBase):
 
                 if step % int(m.floor(self._n_steps / 10)) == 0:
                     print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
-
-                step += 1
 
         if self._make_plots:
             
