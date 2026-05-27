@@ -764,10 +764,10 @@ class Deconv2D(DeconvBase):
         kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel(u, v), 0), 0)
     
         padding = (
-            int(kernel.shape[2] /2 - 1), 
-            int(kernel.shape[2] /2),
-            int(kernel.shape[3] /2 - 1), 
-            int(kernel.shape[3] /2)
+            m.ceil(kernel.shape[2] /2 - 1), 
+            m.floor(kernel.shape[2] /2),
+            m.ceil(kernel.shape[3] /2 - 1), 
+            m.floor(kernel.shape[3] /2)
         )
 
         ## get the positions of the fibers
