@@ -18,6 +18,10 @@ from torch.nn.functional import conv2d, pad
 from torch.nn import PoissonNLLLoss, MSELoss, L1Loss
 from torch.optim import Adam
 
+import MinkowskiEngine as ME
+from MinkowskiEngine.utils import sparse_quantize
+from MinkowskiEngine import SparseTensor, MinkowskiConvolution
+
 from liquidreco.hit import Hit, Hit2D, Hit3D
 from liquidreco.modules.module_base import ModuleBase
 from liquidreco.geometry import GeometryManager
@@ -951,6 +955,56 @@ class Deconv3D(DeconvBase):
 
         return hits
 
+    def _make_pixel_tensor(
+            self,
+            x_fiber_tensor: Tensor, y_fiber_tensor: Tensor, z_fiber_tensor: Tensor
+    ) -> SparseTensor:
+        
+        x_pixel_tensor = torch.repeat_interleave(x_fiber_tensor * 10.0, self._pixel_divisions, dim=0)
+        x_pixel_tensor = torch.repeat_interleave(x_pixel_tensor, self._pixel_divisions, dim=1)
+
+        y_pixel_tensor = torch.repeat_interleave(y_fiber_tensor * 10.0, self._pixel_divisions, dim=0)
+        y_pixel_tensor = torch.repeat_interleave(y_pixel_tensor, self._pixel_divisions, dim=1)
+
+        z_pixel_tensor = torch.repeat_interleave(z_fiber_tensor * 10.0, self._pixel_divisions, dim=0)
+        z_pixel_tensor = torch.repeat_interleave(z_pixel_tensor, self._pixel_divisions, dim=1)
+
+        assert y_pixel_tensor.shape[0] == z_pixel_tensor.shape[0], "X size of y and z fiber tensors must be equal!!"
+        assert x_pixel_tensor.shape[0] == z_pixel_tensor.shape[1], "Y size of x and z fiber tensors must be equal!!"
+        assert x_pixel_tensor.shape[1] == y_pixel_tensor.shape[1], "Z size of x and y fiber tensors must be equal!!"
+        
+        x_indices = []
+        y_indices = []
+        z_indices = []
+        features = []
+
+        for x in range(y_pixel_tensor.shape[0]):
+            for y in range(x_pixel_tensor.shape[0]):
+                for z in range(x_pixel_tensor.shape[1]):
+
+                    x_fiber_light = x_pixel_tensor[y, z] 
+                    y_fiber_light = y_pixel_tensor[x, z]
+                    z_fiber_light = z_pixel_tensor[x, y]
+
+                    if x_fiber_light > 0.0 and y_fiber_light > 0.0 and z_fiber_light > 0.0:
+
+                        x_indices.append(x)
+                        y_indices.append(y)
+                        z_indices.append(z)
+                        features.append(x_fiber_light + y_fiber_light + z_fiber_light)
+
+        pixel_tensor = torch.sparse_coo_tensor(
+            torch.tensor([x_indices, y_indices, z_indices]),
+            torch.tensor(features),
+            size=(y_pixel_tensor.shape[0], x_pixel_tensor.shape[0], x_pixel_tensor.shape[1]),
+            requires_grad=True
+        )
+        
+        print(pixel_tensor)
+
+        return pixel_tensor
+
+
     def _fit_laplace(
             self, 
             x_hits:typing.List['Hit2D'],
@@ -1005,17 +1059,6 @@ class Deconv3D(DeconvBase):
         x_fiber_tensor = tensor(x_fiber_hist)
         y_fiber_tensor = tensor(y_fiber_hist)
         z_fiber_tensor = tensor(z_fiber_hist)
-
-        pixel_tensor = tensor(
-            np.zeros(
-                (
-                    (fiber_x_bins.shape[0] - 1) * self._pixel_divisions, 
-                    (fiber_y_bins.shape[0] - 1) * self._pixel_divisions, 
-                    (fiber_z_bins.shape[0] - 1) * self._pixel_divisions
-                )
-            )
-        )
-        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
         
         x_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("y", "z"), 0), 0)
         y_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "z"), 0), 0)
@@ -1032,12 +1075,12 @@ class Deconv3D(DeconvBase):
         pixel_y_positions = np.arange(start=min(y_values) - 3.0 * y_pitch / 2.0, stop=max(y_values) + 5.0 * y_pitch / 2.0, step = y_pitch / self._pixel_divisions) 
         pixel_z_positions = np.arange(start=min(z_values) - 3.0 * z_pitch / 2.0, stop=max(z_values) + 5.0 * z_pitch / 2.0, step = z_pitch / self._pixel_divisions) 
 
-        pixel_tensor.requires_grad = True
+        pixel_tensor = self._make_pixel_tensor(x_fiber_tensor, y_fiber_tensor, z_fiber_tensor).unsqueeze(0)
 
         print(f'x fiber_tensor shape: {x_fiber_tensor.shape}')
         print(f'y fiber_tensor shape: {y_fiber_tensor.shape}')
         print(f'z fiber_tensor shape: {z_fiber_tensor.shape}')
-        print(f'pixel_tensor shape: {pixel_tensor.shape}')
+        print(f'pixel_tensor shape: {pixel_tensor}')
         print(f'x kernel shape: {x_kernel.shape}')
         print(f'y kernel shape: {y_kernel.shape}')
         print(f'z kernel shape: {z_kernel.shape}')
@@ -1047,6 +1090,9 @@ class Deconv3D(DeconvBase):
 
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor])
+
+        MEConv = MinkowskiConvolution(1, 1, kernel_size = self._kernel_size * 2, stride = self._pixel_divisions, dimension = 2)
+        MEConv.kernel = torch.nn.Parameter(x_kernel.T[:].flatten().unsqueeze(1).unsqueeze(2))
         
         for lr in [0.1]:
 
@@ -1055,13 +1101,20 @@ class Deconv3D(DeconvBase):
             print(f'##### LR = {lr} #####')
 
             for step in range (self._n_steps):
-
-                pixel_tensor.grad = None
                 
-                x_conv = conv2d(pad(torch.sum(pixel_tensor, dim=1), padding), x_kernel, stride = self._pixel_divisions)
-                y_conv = conv2d(pad(torch.sum(pixel_tensor, dim=2), padding), y_kernel, stride = self._pixel_divisions)
-                z_conv = conv2d(pad(torch.sum(pixel_tensor, dim=3), padding), z_kernel, stride = self._pixel_divisions)
+                optimiser.zero_grad()
 
+                x_proj = pad(torch.sum(pixel_tensor, dim=1).to_dense().unsqueeze(0), padding)
+                y_proj = pad(torch.sum(pixel_tensor, dim=2).to_dense().unsqueeze(0), padding)
+                z_proj = pad(torch.sum(pixel_tensor, dim=3).to_dense().unsqueeze(0), padding)
+                
+                x_conv = conv2d(x_proj, x_kernel, stride = self._pixel_divisions)
+                y_conv = conv2d(y_proj, y_kernel, stride = self._pixel_divisions)
+                z_conv = conv2d(z_proj, z_kernel, stride = self._pixel_divisions)
+
+                print(f'x proj shape:  {x_proj.shape}')
+                print(f'x fiber shape: {x_fiber_tensor.shape}')
+                
                 x_loss = loss_fn(x_conv[0], x_fiber_tensor)
                 y_loss = loss_fn(y_conv[0], y_fiber_tensor)
                 z_loss = loss_fn(z_conv[0], z_fiber_tensor)
