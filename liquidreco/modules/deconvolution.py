@@ -920,6 +920,15 @@ class Deconv2D(DeconvBase):
 
             self._pdf.savefig(fig)
 
+            fig.clear()
+
+            reg_conv = conv2d(pixel_tensor, self._regularisation_kernels, stride=1).min(dim=0)[0].abs()
+            print(f"reg conv {reg_conv.shape}")
+            with torch.no_grad():
+                plt.imshow(reg_conv)
+            plt.colorbar()
+            self._pdf.savefig(fig)
+
             plt.clf()
 
         return pixel_tensor, u_pixel_positions, v_pixel_positions
