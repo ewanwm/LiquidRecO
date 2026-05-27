@@ -495,31 +495,31 @@ class DeconvBase(ModuleBase):
 
         assert self._kernel_size %2 != 0, "Kernel size must be odd!!!!"
 
-        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions - 1)
+        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions)
         pitch = GeometryManager().get_pitch(u)
         pixel_width = pitch / self._pixel_divisions
 
         np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
 
-        for i in range(-int(m.ceil(kernel_size_pixels / 2)) + 1, int(m.ceil(kernel_size_pixels / 2))):
-            for j in range(-int(m.ceil(kernel_size_pixels / 2)) + 1, int(m.ceil(kernel_size_pixels / 2))):
+        for kernel_i in range(kernel_size_pixels):
+            for kernel_j in range(kernel_size_pixels):
+                
+                i = (kernel_i - kernel_size_pixels / 2.0 + 0.5) * pixel_width
+                j = (kernel_j - kernel_size_pixels / 2.0 + 0.5) * pixel_width
 
-                kernel_i = int(m.ceil(kernel_size_pixels / 2) - 1 + i)
-                kernel_j = int(m.ceil(kernel_size_pixels / 2) - 1 + j)
+                pixel_low_i = i - 0.5 * pixel_width
+                pixel_high_i = i + 0.5 * pixel_width
 
-                pixel_low_i = (i - 0.5) * pixel_width
-                pixel_high_i = (i + 0.5) * pixel_width
-
-                pixel_low_j = (j - 0.5) * pixel_width
-                pixel_high_j = (j + 0.5) * pixel_width
+                pixel_low_j = j - 0.5 * pixel_width
+                pixel_high_j = j + 0.5 * pixel_width
 
                 mean = 0.0
                 accum = 0
 
                 n_sub_pixels = 10
-                for sub_pixel_i in np.arange(pixel_low_i + pixel_width / n_sub_pixels, pixel_high_i, step = pixel_width / n_sub_pixels):
+                for sub_pixel_i in np.arange(pixel_low_i + 0.5 * pixel_width / n_sub_pixels, pixel_high_i, step = pixel_width / n_sub_pixels):
                     
-                    for sub_pixel_j in np.arange(pixel_low_j + pixel_width / n_sub_pixels, pixel_high_j, step = pixel_width / n_sub_pixels):
+                    for sub_pixel_j in np.arange(pixel_low_j + 0.5 * pixel_width / n_sub_pixels, pixel_high_j, step = pixel_width / n_sub_pixels):
 
                         distance = np.linalg.norm([sub_pixel_i, sub_pixel_j])
                         weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
