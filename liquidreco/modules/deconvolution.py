@@ -434,6 +434,7 @@ class DeconvBase(ModuleBase):
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.__class__.__name__}-plots.pdf")
 
+        self._regularisation_kernels = self._make_regularisation_kernels()
 
     def _setup_cli_options(self, parser):
 
@@ -478,6 +479,71 @@ class DeconvBase(ModuleBase):
             default=7.0
         )
 
+    def _make_regularisation_kernels(
+            self
+        ):
+
+        np_kernels = [np.zeros((3,3)) * 10.0 for _ in range(12)]
+
+        ## horisontal line
+        np_kernels[0][1,:] = -1.0
+        np_kernels[0][1,1] = 2.0
+
+        np_kernels[1][:,1] = -1.0
+        np_kernels[1][1,1] = 2.0
+
+        ## diagonals
+        np_kernels[2][0,0] = -1.0
+        np_kernels[2][1,1] = 2.0
+        np_kernels[2][2,2] = -1.0
+
+        np_kernels[3][0,2] = -1.0
+        np_kernels[3][1,1] = 2.0
+        np_kernels[3][2,0] = -1.0
+
+        np_kernels[4][0,1] = -1.0
+        np_kernels[4][1,1] = 2.0
+        np_kernels[4][2,2] = -1.0
+
+        np_kernels[5][0,1] = -1.0
+        np_kernels[5][1,1] = 2.0
+        np_kernels[5][2,0] = -1.0
+
+        np_kernels[6][1,0] = -1.0
+        np_kernels[6][1,1] = 2.0
+        np_kernels[6][0,2] = -1.0
+
+        np_kernels[7][1,0] = -1.0
+        np_kernels[7][1,1] = 2.0
+        np_kernels[7][2,2] = -1.0
+
+        np_kernels[8][2,1] = -1.0
+        np_kernels[8][1,1] = 2.0
+        np_kernels[8][0,0] = -1.0
+
+        np_kernels[9][2,1] = -1.0
+        np_kernels[9][1,1] = 2.0
+        np_kernels[9][0,2] = -1.0
+
+        np_kernels[10][1,2] = -1.0
+        np_kernels[10][1,1] = 2.0
+        np_kernels[10][0,0] = -1.0
+
+        np_kernels[11][1,2] = -1.0
+        np_kernels[11][1,1] = 2.0
+        np_kernels[11][2,0] = -1.0
+
+        if self._make_plots:
+            for kernel in np_kernels:
+                
+                plt.clf()
+                fig = plt.figure()
+                plt.imshow(kernel)
+                plt.colorbar()
+                self._pdf.savefig(fig)
+    
+        return tensor(np_kernels).unsqueeze(1)
+    
     def _make_kernel(
             self,
             u:str, v:str
@@ -810,6 +876,9 @@ class Deconv2D(DeconvBase):
                 pixel_tensor.grad = None
                 conv = conv2d(pad(pixel_tensor, padding), kernel, stride = self._pixel_divisions)
                 loss = loss_fn(conv, fiber_tensor)
+
+                reg_conv = conv2d(pad(pixel_tensor, (1,1,1,1)), self._regularisation_kernels, stride=1).min(dim=0)[0].abs()
+                loss += reg_conv.mean()
                 
                 loss.backward()
 
