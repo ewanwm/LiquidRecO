@@ -434,12 +434,6 @@ class DeconvBase(ModuleBase):
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.__class__.__name__}-plots.pdf")
 
-        ## make kernels once here so we don't have to do it for every event
-        self._kernels: typing.Dict[str, Tensor] = {
-            "zy": self._make_kernel("z", "y"),
-            "xz": self._make_kernel("x", "z"),
-            "xy": self._make_kernel("x", "y")
-        }
 
     def _setup_cli_options(self, parser):
 
@@ -571,6 +565,13 @@ class Deconv2D(DeconvBase):
         self._clusterer = DBSCAN(**self.DBSCAN_args)
         
         self._cluster_pdf = matplotlib.backends.backend_pdf.PdfPages("Deconv2D-cluster-plots.pdf")
+
+        ## make kernels once here so we don't have to do it for every event
+        self._kernels: typing.Dict[str, Tensor] = {
+            "zy": self._make_kernel("z", "y"),
+            "xz": self._make_kernel("x", "z"),
+            "xy": self._make_kernel("x", "y")
+        }
     
     def _setup_cli_options(self, parser):
         
@@ -875,6 +876,13 @@ class Deconv3D(DeconvBase):
     def _initialise(self):
 
         super()._initialise()
+
+        ## make kernels once here so we don't have to do it for every event
+        self._kernels: typing.Dict[str, Tensor] = {
+            "yz": self._make_kernel("y", "z"),
+            "xz": self._make_kernel("x", "z"),
+            "xy": self._make_kernel("x", "y")
+        }
     
     def _setup_cli_options(self, parser):
         
