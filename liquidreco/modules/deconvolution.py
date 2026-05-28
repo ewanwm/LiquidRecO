@@ -924,8 +924,15 @@ class Deconv3D(DeconvBase):
 
         hits_3d = list()
             
+        ## now do the fit fit
+        pixel_tensor, u_pixel_positions, v_pixel_positions, w_pixel_positions = self._do_fit(
+            x_fiber_hits,
+            y_fiber_hits,
+            z_fiber_hits
+        )
+
         ## try and fit the 2d hits
-        _hits = self._do_fit(x_fiber_hits, y_fiber_hits, z_fiber_hits)
+        _hits = self._convert_to_hits(pixel_tensor, u_pixel_positions, v_pixel_positions, w_pixel_positions)
 
         for hit in _hits:
             hits_3d.append(hit)
@@ -936,31 +943,8 @@ class Deconv3D(DeconvBase):
         event.add_data("3d_hits", hits_3d)
 
         return
-
-    def _do_fit(
-        self,
-        x_fiber_hits: typing.List['Hit2D'], 
-        y_fiber_hits: typing.List['Hit2D'], 
-        z_fiber_hits: typing.List['Hit2D']
-    ) -> typing.Tuple[typing.List['Hit2D']]:
-        """Find peaks by attempting to fit laplace distributions to prominent fibers
-
-        :param x_fiber_hits: The x hits to fit to
-        :type fiber_hits: typing.List['Hit2D']
-        :param y_fiber_hits: The y hits to fit to
-        :type fiber_hits: typing.List['Hit2D']
-        :param z_fiber_hits: The z hits to fit to
-        :type fiber_hits: typing.List['Hit2D']
-        :return: Peak hits found by the fit
-        :rtype: typing.Tuple[typing.List['Hit2D']]
-        """
-        
-        ## now do the fit fit
-        pixel_tensor, u_pixel_positions, v_pixel_positions, w_pixel_positions = self._fit_laplace(
-            x_fiber_hits,
-            y_fiber_hits,
-            z_fiber_hits
-        )
+    
+    def _convert_to_hits(self, pixel_tensor: torch.Tensor, u_pixel_positions: np.array, v_pixel_positions: np.array, w_pixel_positions: np.array) -> typing.List:
 
         hits = []
         for i in range(pixel_tensor.shape[1]):
@@ -974,10 +958,41 @@ class Deconv3D(DeconvBase):
                         pos_temp["z"] = w_pixel_positions[k]
                         hit_tmp = Hit3D(pos_temp, weight = pixel_tensor[0, i, j, k].detach().numpy())
                         hits.append(hit_tmp)
-
+        
         return hits
+    
+    def _do_make_plots(self, pixel_tensor, kernel: torch.Tensor, fiber_hist: np.array, dim: int) -> None:
 
-    def _fit_laplace(
+        fig, axs = plt.subplots(3,1, figsize=(20, 60))
+
+        mappable = axs[0].imshow(
+            fiber_hist, 
+            cmap=plt.get_cmap("coolwarm")
+        )
+
+        fig.colorbar(mappable, ax=axs[0])
+
+        conv = self.convolve(torch.sum(pixel_tensor, dim+1), kernel)
+
+        mappable = axs[1].imshow(
+            conv.detach().numpy()[0, ...], 
+            cmap=plt.get_cmap("coolwarm")
+        )
+
+        fig.colorbar(mappable, ax=axs[1])
+
+        mappable = axs[2].imshow(
+            torch.sum(pixel_tensor.detach(), dim=dim+1).numpy()[0, ...], 
+            cmap=plt.get_cmap("coolwarm")
+        )
+
+        fig.colorbar(mappable, ax=axs[2])
+
+        self._pdf.savefig(fig)
+
+        plt.clf()
+
+    def _do_fit(
             self, 
             x_hits:typing.List['Hit2D'],
             y_hits:typing.List['Hit2D'],
@@ -1036,33 +1051,25 @@ class Deconv3D(DeconvBase):
         y_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "z"), 0), 0)
         z_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "y"), 0), 0)
     
-        ## make the pixel tensor
-        pixel_tensor_x_shape = self._get_pixel_tensor_size(
-            fiber_x_bins.shape[0] - 1,
-            y_kernel.shape[2]
-        ) 
-        pixel_tensor_y_shape = self._get_pixel_tensor_size(
-            fiber_y_bins.shape[0] - 1,
-            x_kernel.shape[2]
-        ) 
-        pixel_tensor_z_shape = self._get_pixel_tensor_size(
-            fiber_z_bins.shape[0] - 1,
-            y_kernel.shape[3]
-        ) 
-
-        pixel_tensor = tensor(
-            np.zeros(
-                (
-                    pixel_tensor_x_shape, 
-                    pixel_tensor_y_shape, 
-                    pixel_tensor_z_shape
-                )
-            )
+        pixel_tensor = self.deconvolve(
+            x_fiber_tensor,
+            y_fiber_tensor,
+            z_fiber_tensor,
+            x_kernel,
+            y_kernel,
+            z_kernel
         )
-        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
+        
+        if self._make_plots:
+            
+            self._do_make_plots(
+                pixel_tensor,
+                z_kernel,
+                z_fiber_hist,
+                2
+            )
 
-        pixel_tensor.requires_grad = True
-
+        ## calculate fiber positions in each dimension
         pixel_x_positions = self._get_pixel_positions(
             fiber_x_bins,
             y_kernel.shape[2],
@@ -1079,6 +1086,45 @@ class Deconv3D(DeconvBase):
             "z"
         ) 
 
+        return pixel_tensor, pixel_x_positions, pixel_y_positions, pixel_z_positions
+    
+    def deconvolve(
+        self,
+        x_fiber_tensor: torch.Tensor,
+        y_fiber_tensor: torch.Tensor,
+        z_fiber_tensor: torch.Tensor,
+        x_kernel: torch.Tensor,
+        y_kernel: torch.Tensor,
+        z_kernel: torch.Tensor        
+    ):
+
+        ## make the pixel tensor
+        pixel_tensor_x_shape = self._get_pixel_tensor_size(
+            y_fiber_tensor.shape[0],
+            y_kernel.shape[2]
+        ) 
+        pixel_tensor_y_shape = self._get_pixel_tensor_size(
+            x_fiber_tensor.shape[0],
+            x_kernel.shape[2]
+        ) 
+        pixel_tensor_z_shape = self._get_pixel_tensor_size(
+            y_fiber_tensor.shape[1],
+            y_kernel.shape[3]
+        ) 
+
+        pixel_tensor = tensor(
+            np.zeros(
+                (
+                    pixel_tensor_x_shape, 
+                    pixel_tensor_y_shape, 
+                    pixel_tensor_z_shape
+                )
+            )
+        )
+        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
+
+        pixel_tensor.requires_grad = True
+
         print(f'x fiber_tensor shape: {x_fiber_tensor.shape}')
         print(f'y fiber_tensor shape: {y_fiber_tensor.shape}')
         print(f'z fiber_tensor shape: {z_fiber_tensor.shape}')
@@ -1086,14 +1132,11 @@ class Deconv3D(DeconvBase):
         print(f'x kernel shape: {x_kernel.shape}')
         print(f'y kernel shape: {y_kernel.shape}')
         print(f'z kernel shape: {z_kernel.shape}')
-        print(f'x positions shape: {pixel_x_positions.shape}')
-        print(f'y positions shape: {pixel_y_positions.shape}')
-        print(f'z positions shape: {pixel_z_positions.shape}')
 
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor])
         
-        for lr in [1.0]:
+        for lr in [100.0, 10.0]:
 
             optimiser.lr = lr
 
@@ -1127,36 +1170,6 @@ class Deconv3D(DeconvBase):
                 if step % int(m.floor(self._n_steps / 10)) == 0:
                     print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
 
-        if self._make_plots:
-            
-            fig, axs = plt.subplots(3,1, figsize=(20, 60))
+        return pixel_tensor
 
-            mappable = axs[0].imshow(
-                z_fiber_hist, 
-                cmap=plt.get_cmap("coolwarm")
-            )
-
-            fig.colorbar(mappable, ax=axs[0])
-
-            conv = self.convolve(torch.sum(pixel_tensor, 3), z_kernel)
-
-            mappable = axs[1].imshow(
-                conv.detach().numpy()[0, ...], 
-                cmap=plt.get_cmap("coolwarm")
-            )
-
-            fig.colorbar(mappable, ax=axs[1])
-
-            mappable = axs[2].imshow(
-                torch.sum(pixel_tensor.detach(), dim=3).numpy()[0, ...], 
-                cmap=plt.get_cmap("coolwarm")
-            )
-
-            fig.colorbar(mappable, ax=axs[2])
-
-            self._pdf.savefig(fig)
-
-            plt.clf()
-
-        return pixel_tensor, pixel_x_positions, pixel_y_positions, pixel_z_positions
     
