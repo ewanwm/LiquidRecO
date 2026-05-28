@@ -431,6 +431,7 @@ class DeconvBase(ModuleBase):
         self._pixel_divisions = self.args.pixel_divisions
         self._laplace_width = self.args.laplace_width
         self._n_steps = self.args.n_steps
+        self._deconv_kernel_file = self.args.deconv_kernel
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.__class__.__name__}-plots.pdf")
 
