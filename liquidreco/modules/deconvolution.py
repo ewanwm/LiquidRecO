@@ -477,6 +477,13 @@ class DeconvBase(ModuleBase):
             required=False,
             default=7.0
         )
+        parser.add_argument(
+            "--deconv-kernel",
+            help="numpy format file defining the convolution kernel. If specified, the --kernel-size and --pixel-divisions should reflect the settings used to generate this file",
+            required=False,
+            type=str,
+            default=None
+        )
 
     def _make_kernel(
             self,
@@ -489,39 +496,51 @@ class DeconvBase(ModuleBase):
 
         assert self._kernel_size %2 != 0, "Kernel size must be odd!!!!"
 
-        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions)
+        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions + 1)
         pitch = GeometryManager().get_pitch(u)
         pixel_width = pitch / self._pixel_divisions
+        
+        np_kernel = None
 
-        np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
+        if self._deconv_kernel_file is not None:
 
-        for kernel_i in range(kernel_size_pixels):
-            for kernel_j in range(kernel_size_pixels):
-                
-                i = (kernel_i - kernel_size_pixels / 2.0 + 0.5) * pixel_width
-                j = (kernel_j - kernel_size_pixels / 2.0 + 0.5) * pixel_width
+            np_kernel = np.load(self._deconv_kernel_file)
 
-                pixel_low_i = i - 0.5 * pixel_width
-                pixel_high_i = i + 0.5 * pixel_width
+            assert np_kernel.ndim == 2, "kernel must be 2D!"
+            assert (np_kernel.shape[0] == kernel_size_pixels and np_kernel.shape[1] == kernel_size_pixels), (
+                f"size implied by given kernel specs ({kernel_size_pixels}, {kernel_size_pixels}) do not match the specified kernel in file {self._deconv_kernel_file} ({np_kernel.shape})!"
+            )
+            
+        else:
+            np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
 
-                pixel_low_j = j - 0.5 * pixel_width
-                pixel_high_j = j + 0.5 * pixel_width
-
-                mean = 0.0
-                accum = 0
-
-                n_sub_pixels = 10
-                for sub_pixel_i in np.arange(pixel_low_i + 0.5 * pixel_width / n_sub_pixels, pixel_high_i, step = pixel_width / n_sub_pixels):
+            for kernel_i in range(kernel_size_pixels):
+                for kernel_j in range(kernel_size_pixels):
                     
-                    for sub_pixel_j in np.arange(pixel_low_j + 0.5 * pixel_width / n_sub_pixels, pixel_high_j, step = pixel_width / n_sub_pixels):
+                    i = (kernel_i - kernel_size_pixels / 2.0 + 0.5) * pixel_width
+                    j = (kernel_j - kernel_size_pixels / 2.0 + 0.5) * pixel_width
 
-                        distance = np.linalg.norm([sub_pixel_i, sub_pixel_j])
-                        weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
-                        mean += weight
+                    pixel_low_i = i - 0.5 * pixel_width
+                    pixel_high_i = i + 0.5 * pixel_width
 
-                        accum += 1
+                    pixel_low_j = j - 0.5 * pixel_width
+                    pixel_high_j = j + 0.5 * pixel_width
 
-                np_kernel[kernel_i, kernel_j] = mean / float(accum)
+                    mean = 0.0
+                    accum = 0
+
+                    n_sub_pixels = 10
+                    for sub_pixel_i in np.arange(pixel_low_i + 0.5 * pixel_width / n_sub_pixels, pixel_high_i, step = pixel_width / n_sub_pixels):
+                        
+                        for sub_pixel_j in np.arange(pixel_low_j + 0.5 * pixel_width / n_sub_pixels, pixel_high_j, step = pixel_width / n_sub_pixels):
+
+                            distance = np.linalg.norm([sub_pixel_i, sub_pixel_j])
+                            weight = laplace.pdf(distance / self._laplace_width ) / self._laplace_width
+                            mean += weight
+
+                            accum += 1
+
+                    np_kernel[kernel_i, kernel_j] = mean / float(accum)
                 
         if self._make_plots:
 
