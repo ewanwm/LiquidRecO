@@ -459,10 +459,10 @@ class DeconvBase(ModuleBase):
         )
         parser.add_argument(
             "--kernel-size", 
-            help="size of the convolution kernel in units of fiber pitch (kernel-size = 4 means kernel will span 4 fibers - 2 on either side of the central fiber)", 
+            help="size of the convolution kernel in units of 'pixels'. (kernel-size = 4 means kernel will span 4 pixels - 2 on either side of the central fiber)", 
             type=int,
             required=False,
-            default=6
+            default=5
         )
         parser.add_argument(
             "--pixel-divisions", 
@@ -486,6 +486,35 @@ class DeconvBase(ModuleBase):
             default=None
         )
 
+    def _get_pixel_tensor_size(self, fiber_hist_size: int, kernel_size: int) -> int:
+
+        pixel_tensor_size = self._pixel_divisions * (fiber_hist_size - 1) + 1
+        
+        ## pad based on size of the kernel
+        pixel_tensor_size += np.floor(kernel_size / 2.0) * 2.0
+
+        return int(pixel_tensor_size)
+
+    def _get_pixel_positions(self, fiber_hist_bins: np.array, kernel_size: int, dim: str):
+
+        assert fiber_hist_bins.ndim == 1
+        
+        ## get the positions of the fibers
+        fiber_positions = (fiber_hist_bins[1:] + fiber_hist_bins[:-1]) / 2.0
+
+        ## get geometry stuff
+        pitch = GeometryManager().get_pitch(dim)
+        
+        pixel_width = pitch / self._pixel_divisions
+        
+        ## get min and max pixel positions
+        min_pixel = fiber_positions[0]  - np.floor(kernel_size / 2.0) * pixel_width
+        max_pixel = fiber_positions[-1] + np.floor(kernel_size / 2.0) * pixel_width
+
+        pixel_positions = np.arange(min_pixel, max_pixel + pixel_width, step = pixel_width)
+        
+        return pixel_positions
+
     def _make_kernel(
             self,
             u:str, v:str
@@ -495,9 +524,6 @@ class DeconvBase(ModuleBase):
             (GeometryManager().get_pitch(u) == GeometryManager().get_pitch(v))
         ), "Sorry, Deconv2D only supports uniform fiber grids at the moment (need pitch u == pitch v) :("
 
-        assert self._kernel_size %2 != 0, "Kernel size must be odd!!!!"
-
-        kernel_size_pixels = int(self._kernel_size * self._pixel_divisions + 1)
         pitch = GeometryManager().get_pitch(u)
         pixel_width = pitch / self._pixel_divisions
         
@@ -505,21 +531,22 @@ class DeconvBase(ModuleBase):
 
         if self._deconv_kernel_file is not None:
 
+            ## TODO: define some format for the kernel file that defines e.g. pixel size so that it can be checked here to avoid using wrong file by accident
             np_kernel = np.load(self._deconv_kernel_file)
 
             assert np_kernel.ndim == 2, "kernel must be 2D!"
-            assert (np_kernel.shape[0] == kernel_size_pixels and np_kernel.shape[1] == kernel_size_pixels), (
-                f"size implied by given kernel specs ({kernel_size_pixels}, {kernel_size_pixels}) do not match the specified kernel in file {self._deconv_kernel_file} ({np_kernel.shape})!"
+            assert (np_kernel.shape[0] == self._kernel_size and np_kernel.shape[1] == self._kernel_size), (
+                f"size implied by given kernel specs ({self._kernel_size}, {self._kernel_size}) do not match the specified kernel in file {self._deconv_kernel_file} ({np_kernel.shape})!"
             )
             
         else:
-            np_kernel = np.zeros((kernel_size_pixels, kernel_size_pixels)) 
+            np_kernel = np.zeros((self._kernel_size, self._kernel_size)) 
 
-            for kernel_i in range(kernel_size_pixels):
-                for kernel_j in range(kernel_size_pixels):
+            for kernel_i in range(self._kernel_size):
+                for kernel_j in range(self._kernel_size):
                     
-                    i = (kernel_i - kernel_size_pixels / 2.0 + 0.5) * pixel_width
-                    j = (kernel_j - kernel_size_pixels / 2.0 + 0.5) * pixel_width
+                    i = (kernel_i - self._kernel_size / 2.0 + 0.5) * pixel_width
+                    j = (kernel_j - self._kernel_size / 2.0 + 0.5) * pixel_width
 
                     pixel_low_i = i - 0.5 * pixel_width
                     pixel_high_i = i + 0.5 * pixel_width
@@ -768,7 +795,7 @@ class Deconv2D(DeconvBase):
         fiber_u_bins = np.arange(start=min(u_values) - 3.0 * u_pitch / 2.0, stop=max(u_values) + 5.0 * u_pitch / 2.0, step = u_pitch) 
         fiber_v_bins = np.arange(start=min(v_values) - 3.0 * v_pitch / 2.0, stop=max(v_values) + 5.0 * v_pitch / 2.0, step = v_pitch) 
 
-        fiber_hist, u_bins, v_bins = np.histogram2d(
+        fiber_hist, _, _ = np.histogram2d(
             u_values,
             v_values,
             weights=[hit.weight for hit in hits],
@@ -776,50 +803,33 @@ class Deconv2D(DeconvBase):
         )
 
         fiber_tensor = tensor(fiber_hist)
-
-        pixel_tensor = torch.repeat_interleave(fiber_tensor * 10.0, self._pixel_divisions, dim=0)
-        pixel_tensor = torch.repeat_interleave(pixel_tensor, self._pixel_divisions, dim=1)
-        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
         
         kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel(u, v), 0), 0)
-    
-        padding = (
-            m.ceil(kernel.shape[2] /2 - 1), 
-            m.floor(kernel.shape[2] /2),
-            m.ceil(kernel.shape[3] /2 - 1), 
-            m.floor(kernel.shape[3] /2)
+
+        ## get the info about the pixel tensor
+        pixel_tensor_shape = [0, 0]
+        pixel_tensor_shape[0] = self._get_pixel_tensor_size(
+            fiber_hist.shape[0],
+            kernel.shape[-2]
+        )
+        pixel_tensor_shape[1] = self._get_pixel_tensor_size(
+            fiber_hist.shape[1],
+            kernel.shape[-1]
         )
 
-        ## get the positions of the fibers
-        u_fiber_positions = (u_bins[1:] + u_bins[:-1]) / 2.0
-        v_fiber_positions = (v_bins[1:] + v_bins[:-1]) / 2.0
-
-        ## get geometry stuff
-        u_pitch = GeometryManager().get_pitch(u)
-        v_pitch = GeometryManager().get_pitch(v)
-        u_pixel_width = u_pitch / self._pixel_divisions
-        v_pixel_width = v_pitch / self._pixel_divisions
-
-        u_pixel_positions = []
-        v_pixel_positions = []
-
-        for u_fiber in u_fiber_positions:
-            for i_pixel in range(self._pixel_divisions):
-                u_pixel_positions.append(u_fiber + (i_pixel - 0.5) * u_pixel_width)
-        for v_fiber in v_fiber_positions:
-            for i_pixel in range(self._pixel_divisions):
-                v_pixel_positions.append(v_fiber + (i_pixel - 0.5) * v_pixel_width)
-
+        ## create the pixel tensor
+        pixel_tensor = tensor(np.zeros((pixel_tensor_shape[0], pixel_tensor_shape[1])))
+        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
         pixel_tensor.requires_grad = True
 
         print(f'fiber_tensor shape: {fiber_tensor.shape}')
         print(f'pixel_tensor shape: {pixel_tensor.shape}')
         print(f'kernel shape: {kernel.shape}')
 
-        loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
+        loss_fn = PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor], lr = 1.0)
         
-        for lr in [0.1]:
+        for lr in [10.0, 1.0]:
 
             optimiser.lr = lr
             
@@ -827,7 +837,7 @@ class Deconv2D(DeconvBase):
 
             for step in range (self._n_steps):
 
-                conv = conv2d(pad(pixel_tensor, padding), kernel, stride = self._pixel_divisions)
+                conv = conv2d(pixel_tensor, kernel, stride = self._pixel_divisions)
                 loss = loss_fn(conv, fiber_tensor)
                 
                 loss.backward()
@@ -852,7 +862,7 @@ class Deconv2D(DeconvBase):
 
             fig.colorbar(mappable, ax=axs[0])
 
-            conv = conv2d(pad(pixel_tensor, padding), kernel, stride = self._pixel_divisions)
+            conv = conv2d(pixel_tensor, kernel, stride = self._pixel_divisions)
 
             mappable = axs[1].imshow(
                 conv.detach().numpy()[0, ...], 
@@ -872,7 +882,7 @@ class Deconv2D(DeconvBase):
 
             plt.clf()
 
-        return pixel_tensor, u_pixel_positions, v_pixel_positions
+        return pixel_tensor, self._get_pixel_positions(fiber_u_bins, kernel.shape[-2], dim=u), self._get_pixel_positions(fiber_v_bins, kernel.shape[-1], dim=v)
 
 class Deconv3D(DeconvBase):
     """Performs a deconvolution from fiber hits to light deposited in detector "voxels" in 3D
@@ -1024,34 +1034,53 @@ class Deconv3D(DeconvBase):
         x_fiber_tensor = tensor(x_fiber_hist)
         y_fiber_tensor = tensor(y_fiber_hist)
         z_fiber_tensor = tensor(z_fiber_hist)
-
-        pixel_tensor = tensor(
-            np.zeros(
-                (
-                    (fiber_x_bins.shape[0] - 1) * self._pixel_divisions, 
-                    (fiber_y_bins.shape[0] - 1) * self._pixel_divisions, 
-                    (fiber_z_bins.shape[0] - 1) * self._pixel_divisions
-                )
-            )
-        )
-        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
         
         x_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("y", "z"), 0), 0)
         y_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "z"), 0), 0)
         z_kernel = torch.unsqueeze(torch.unsqueeze(self._get_kernel("x", "y"), 0), 0)
     
-        padding = (
-            int(self._kernel_size * self._pixel_divisions / 2 - 1), 
-            int(self._kernel_size * self._pixel_divisions / 2 - 1),
-            int(self._kernel_size * self._pixel_divisions / 2 - 1), 
-            int(self._kernel_size * self._pixel_divisions / 2 - 1)
-        )
+        ## make the pixel tensor
+        pixel_tensor_x_shape = self._get_pixel_tensor_size(
+            fiber_x_bins.shape[0] - 1,
+            y_kernel.shape[2]
+        ) 
+        pixel_tensor_y_shape = self._get_pixel_tensor_size(
+            fiber_y_bins.shape[0] - 1,
+            x_kernel.shape[2]
+        ) 
+        pixel_tensor_z_shape = self._get_pixel_tensor_size(
+            fiber_z_bins.shape[0] - 1,
+            y_kernel.shape[3]
+        ) 
 
-        pixel_x_positions = np.arange(start=min(x_values) - 3.0 * x_pitch / 2.0, stop=max(x_values) + 5.0 * x_pitch / 2.0, step = x_pitch / self._pixel_divisions) 
-        pixel_y_positions = np.arange(start=min(y_values) - 3.0 * y_pitch / 2.0, stop=max(y_values) + 5.0 * y_pitch / 2.0, step = y_pitch / self._pixel_divisions) 
-        pixel_z_positions = np.arange(start=min(z_values) - 3.0 * z_pitch / 2.0, stop=max(z_values) + 5.0 * z_pitch / 2.0, step = z_pitch / self._pixel_divisions) 
+        pixel_tensor = tensor(
+            np.zeros(
+                (
+                    pixel_tensor_x_shape, 
+                    pixel_tensor_y_shape, 
+                    pixel_tensor_z_shape
+                )
+            )
+        )
+        pixel_tensor = torch.unsqueeze(pixel_tensor, 0)
 
         pixel_tensor.requires_grad = True
+
+        pixel_x_positions = self._get_pixel_positions(
+            fiber_x_bins,
+            y_kernel.shape[2],
+            "x"
+        ) 
+        pixel_y_positions = self._get_pixel_positions(
+            fiber_y_bins,
+            x_kernel.shape[2],
+            "y"
+        ) 
+        pixel_z_positions = self._get_pixel_positions(
+            fiber_z_bins,
+            y_kernel.shape[3],
+            "z"
+        ) 
 
         print(f'x fiber_tensor shape: {x_fiber_tensor.shape}')
         print(f'y fiber_tensor shape: {y_fiber_tensor.shape}')
@@ -1067,7 +1096,7 @@ class Deconv3D(DeconvBase):
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor])
         
-        for lr in [0.1]:
+        for lr in [1.0]:
 
             optimiser.lr = lr
 
@@ -1077,9 +1106,9 @@ class Deconv3D(DeconvBase):
 
                 pixel_tensor.grad = None
                 
-                x_conv = conv2d(pad(torch.sum(pixel_tensor, dim=1), padding), x_kernel, stride = self._pixel_divisions)
-                y_conv = conv2d(pad(torch.sum(pixel_tensor, dim=2), padding), y_kernel, stride = self._pixel_divisions)
-                z_conv = conv2d(pad(torch.sum(pixel_tensor, dim=3), padding), z_kernel, stride = self._pixel_divisions)
+                x_conv = conv2d(torch.sum(pixel_tensor, dim=1), x_kernel, stride = self._pixel_divisions)
+                y_conv = conv2d(torch.sum(pixel_tensor, dim=2), y_kernel, stride = self._pixel_divisions)
+                z_conv = conv2d(torch.sum(pixel_tensor, dim=3), z_kernel, stride = self._pixel_divisions)
 
                 x_loss = loss_fn(x_conv[0], x_fiber_tensor)
                 y_loss = loss_fn(y_conv[0], y_fiber_tensor)
@@ -1106,13 +1135,13 @@ class Deconv3D(DeconvBase):
             fig, axs = plt.subplots(3,1, figsize=(20, 60))
 
             mappable = axs[0].imshow(
-                x_fiber_hist, 
+                z_fiber_hist, 
                 cmap=plt.get_cmap("coolwarm")
             )
 
             fig.colorbar(mappable, ax=axs[0])
 
-            conv = conv2d(pad(torch.sum(pixel_tensor, 1), padding), x_kernel, stride = self._pixel_divisions)
+            conv = conv2d(torch.sum(pixel_tensor, 3), z_kernel, stride = self._pixel_divisions)
 
             mappable = axs[1].imshow(
                 conv.detach().numpy()[0, ...], 
@@ -1122,7 +1151,7 @@ class Deconv3D(DeconvBase):
             fig.colorbar(mappable, ax=axs[1])
 
             mappable = axs[2].imshow(
-                torch.sum(pixel_tensor.detach(), dim=1).numpy()[0, ...], 
+                torch.sum(pixel_tensor.detach(), dim=3).numpy()[0, ...], 
                 cmap=plt.get_cmap("coolwarm")
             )
 
