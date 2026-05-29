@@ -432,6 +432,7 @@ class DeconvBase(ModuleBase):
         self._laplace_width = self.args.laplace_width
         self._n_steps = self.args.n_steps
         self._deconv_kernel_file = self.args.deconv_kernel
+        self._learning_rate = self.args.learning_rate
 
         self._pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.__class__.__name__}-plots.pdf")
 
@@ -484,6 +485,13 @@ class DeconvBase(ModuleBase):
             required=False,
             type=str,
             default=None
+        )
+        parser.add_argument(
+            "--learning-rate", "-lr",
+            help="The learning rate for minimisation",
+            required=False,
+            type=float,
+            default=1.0
         )
 
     def _get_pixel_tensor_size(self, fiber_hist_size: int, kernel_size: int) -> int:
@@ -776,30 +784,24 @@ class Deconv2D(DeconvBase):
         print(f'pixel_tensor shape: {pixel_tensor.shape}')
         print(f'kernel shape: {kernel.shape}')
 
-        loss_fn = PoissonNLLLoss(log_input=False)
-        optimiser = Adam(params = [pixel_tensor], lr = 1.0)
-        
-        for lr in [10.0, 1.0]:
+        loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
+        optimiser = Adam(params = [pixel_tensor], lr = self._learning_rate)
 
-            optimiser.lr = lr
+        for step in range (self._n_steps):
+
+            conv = self.convolve(pixel_tensor, kernel)
+            loss = loss_fn(conv, fiber_tensor)
             
-            print(f'##### LR = {lr} #####')
+            loss.backward()
 
-            for step in range (self._n_steps):
+            optimiser.step()
+            optimiser.zero_grad()
 
-                conv = self.convolve(pixel_tensor, kernel)
-                loss = loss_fn(conv, fiber_tensor)
-                
-                loss.backward()
-
-                optimiser.step()
-                optimiser.zero_grad()
-
-                with torch.no_grad():
-                    pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
-                
-                if step % int(m.floor(self._n_steps / 10)) == 0:
-                    print(f'  - step: {step} :: loss: {loss}')
+            with torch.no_grad():
+                pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
+            
+            if step % int(m.floor(self._n_steps / 10)) == 0:
+                print(f'  - step: {step} :: loss: {loss}')
 
         return pixel_tensor
     
@@ -1064,6 +1066,18 @@ class Deconv3D(DeconvBase):
             
             self._do_make_plots(
                 pixel_tensor,
+                x_kernel,
+                x_fiber_hist,
+                0
+            )
+            self._do_make_plots(
+                pixel_tensor,
+                y_kernel,
+                y_fiber_hist,
+                1
+            )
+            self._do_make_plots(
+                pixel_tensor,
                 z_kernel,
                 z_fiber_hist,
                 2
@@ -1134,41 +1148,35 @@ class Deconv3D(DeconvBase):
         print(f'z kernel shape: {z_kernel.shape}')
 
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
-        optimiser = Adam(params = [pixel_tensor])
-        
-        for lr in [100.0, 10.0]:
+        optimiser = Adam(params = [pixel_tensor], lr=self._learning_rate)
 
-            optimiser.lr = lr
+        for step in range (self._n_steps):
 
-            print(f'##### LR = {lr} #####')
+            pixel_tensor.grad = None
+            
+            x_conv = self.convolve(torch.sum(pixel_tensor, dim=1), x_kernel)
+            y_conv = self.convolve(torch.sum(pixel_tensor, dim=2), y_kernel)
+            z_conv = self.convolve(torch.sum(pixel_tensor, dim=3), z_kernel)
 
-            for step in range (self._n_steps):
+            x_loss = loss_fn(x_conv[0], x_fiber_tensor)
+            y_loss = loss_fn(y_conv[0], y_fiber_tensor)
+            z_loss = loss_fn(z_conv[0], z_fiber_tensor)
 
-                pixel_tensor.grad = None
-                
-                x_conv = self.convolve(torch.sum(pixel_tensor, dim=1), x_kernel)
-                y_conv = self.convolve(torch.sum(pixel_tensor, dim=2), y_kernel)
-                z_conv = self.convolve(torch.sum(pixel_tensor, dim=3), z_kernel)
+            loss = tensor([0], dtype = torch.double)
 
-                x_loss = loss_fn(x_conv[0], x_fiber_tensor)
-                y_loss = loss_fn(y_conv[0], y_fiber_tensor)
-                z_loss = loss_fn(z_conv[0], z_fiber_tensor)
+            loss += x_loss 
+            loss += y_loss
+            loss += z_loss
+            
+            loss.backward()
+            optimiser.step()
+            optimiser.zero_grad()
+            
+            with torch.no_grad():
+                pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
 
-                loss = tensor([0], dtype = torch.double)
-
-                loss += x_loss 
-                loss += y_loss
-                loss += z_loss
-                
-                loss.backward()
-                optimiser.step()
-                optimiser.zero_grad()
-                
-                with torch.no_grad():
-                    pixel_tensor[:] = pixel_tensor.clamp(min = 0.0)
-
-                if step % int(m.floor(self._n_steps / 10)) == 0:
-                    print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
+            if step % int(m.floor(self._n_steps / 10)) == 0:
+                print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
 
         return pixel_tensor
 
