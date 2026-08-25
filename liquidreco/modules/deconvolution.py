@@ -14,7 +14,7 @@ from sklearn.cluster import DBSCAN
 
 import torch
 from torch import Tensor, tensor
-from torch.nn.functional import conv2d, pad
+from torch.nn.functional import conv2d
 from torch.nn import PoissonNLLLoss, MSELoss, L1Loss
 from torch.optim import Adam
 
@@ -678,7 +678,7 @@ class Deconv2D(DeconvBase):
 
                 ## now do the fit
                 pixel_tensor, u_pixel_positions, v_pixel_positions = self._do_fit(
-                    fiber_hits,
+                    cluster,
                     u,
                     v
                 )
