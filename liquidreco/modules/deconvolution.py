@@ -784,13 +784,16 @@ class Deconv2D(DeconvBase):
         print(f'pixel_tensor shape: {pixel_tensor.shape}')
         print(f'kernel shape: {kernel.shape}')
 
-        loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
+        mean = torch.mean(fiber_tensor)
+
+        loss_fn = L1Loss(reduction="none") #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor], lr = self._learning_rate)
 
         for step in range (self._n_steps):
 
             conv = self.convolve(pixel_tensor, kernel)
-            loss = loss_fn(conv, fiber_tensor)
+
+            loss = torch.mean(loss_fn(conv, fiber_tensor.unsqueeze(0) / mean))
             
             loss.backward()
 
@@ -803,7 +806,7 @@ class Deconv2D(DeconvBase):
             if step % int(m.floor(self._n_steps / 10)) == 0:
                 print(f'  - step: {step} :: loss: {loss}')
 
-        return pixel_tensor
+        return pixel_tensor * mean
     
     def _do_make_plots(self, fiber_hist: np.array, pixel_tensor: torch.Tensor, kernel: torch.Tensor):
 
@@ -1150,6 +1153,9 @@ class Deconv3D(DeconvBase):
         loss_fn = L1Loss() #PoissonNLLLoss(log_input=False)
         optimiser = Adam(params = [pixel_tensor], lr=self._learning_rate)
 
+        mean = torch.sum(x_fiber_tensor) + torch.sum(y_fiber_tensor) + torch.sum(z_fiber_tensor)
+        mean /= (torch.numel(x_fiber_tensor) + torch.numel(y_fiber_tensor) + torch.numel(z_fiber_tensor))
+
         for step in range (self._n_steps):
 
             pixel_tensor.grad = None
@@ -1158,9 +1164,9 @@ class Deconv3D(DeconvBase):
             y_conv = self.convolve(torch.sum(pixel_tensor, dim=2), y_kernel)
             z_conv = self.convolve(torch.sum(pixel_tensor, dim=3), z_kernel)
 
-            x_loss = loss_fn(x_conv[0], x_fiber_tensor)
-            y_loss = loss_fn(y_conv[0], y_fiber_tensor)
-            z_loss = loss_fn(z_conv[0], z_fiber_tensor)
+            x_loss = loss_fn(x_conv[0], x_fiber_tensor / mean)
+            y_loss = loss_fn(y_conv[0], y_fiber_tensor / mean)
+            z_loss = loss_fn(z_conv[0], z_fiber_tensor / mean)
 
             loss = tensor([0], dtype = torch.double)
 
@@ -1178,6 +1184,6 @@ class Deconv3D(DeconvBase):
             if step % int(m.floor(self._n_steps / 10)) == 0:
                 print(f'  - step: {step} :: loss: {loss} (x loss = {x_loss} y_loss = {y_loss} z_loss = {z_loss})')
 
-        return pixel_tensor
+        return pixel_tensor * mean
 
     
