@@ -244,7 +244,7 @@ class HitBuilder3D(ModuleBase):
         ## if we're not requiring z hits we can stop here
         if not self.require_3_fibers:
 
-            event.add_data("3d_hits", three_fiber_hits)
+            event.add_data("3d_hits", two_fiber_hits)
             
             return
 
