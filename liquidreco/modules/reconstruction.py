@@ -7,7 +7,10 @@ from matplotlib import pyplot as plt
 from liquidreco.event import Event
 
 from linscan import LINSCAN
+# 3D hough transform
 from hough3d.basic_hough import Hough3D
+# 2D hough transform
+from skimage.transform import probabilistic_hough_line
 
 from sklearn.cluster import DBSCAN
 
@@ -23,8 +26,115 @@ from sklearn.neighbors import NearestNeighbors
 from liquidreco.plotting import make_corner_plot, make_rotating_gif, make_corner_plot_fiber_hits
 from liquidreco.modules.module_base import ModuleBase
 
-class HoughTransform(ModuleBase):
-    """ Performs simple Hough line transform
+class HoughTransform2D(ModuleBase):
+    """ Performs simple Hough line transform on 2D hits
+
+    Right now only makes plots of the fitted lines, doesn't save them to the event
+    """
+
+    def __init__(self):
+        
+        super().__init__()
+
+        self.requirements = ["x_fiber_hits", "y_fiber_hits", "z_fiber_hits"]
+
+    def _setup_cli_options(self, parser):
+
+        parser.add_argument(
+            "--min-charge-thresh", 
+            help="Minimum charge that a hit must have to be included in the track fitting", 
+            required = False, default = 80.0, type = float,
+        )
+        parser.add_argument(
+            "--max-plot-charge", 
+            help="Maximum charge for plots", 
+            required = False, default = 100.0, type = float,
+        )
+        
+    def _initialise(self) -> None:
+        
+        self.min_charge_thresh = self.args.min_charge_thresh
+        self.max_plot_charge = self.args.max_plot_charge
+
+        self.hough_finder = Hough3D(
+            neighbour_dist=1.5, min_points_per_line=5, lattice_step_size=1.0
+        )
+
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hough2D-event-examples.pdf")
+
+        self.clusterer = DBSCAN(40.0)
+
+    def _process(self, event:Event):
+        """ Perform Hough transform on an event and save the result to a given file
+
+        :param event: Object describing the hits in an event
+        :type event: Event
+        """
+
+        x_fiber_hits = event["x_fiber_hits"]
+        y_fiber_hits = event["y_fiber_hits"]
+        z_fiber_hits = event["z_fiber_hits"]
+
+        fig, axs = plt.subplots(2, 2, sharex='col', sharey='row', figsize=(5, 5))
+        fig.suptitle("Hough Transform 2D")
+
+        make_corner_plot_fiber_hits(
+            fig,
+            axs, 
+            x_fiber_hits,
+            y_fiber_hits,
+            z_fiber_hits
+        )
+
+        for fiber_hits, u_name, v_name, ax_ids in zip([
+            x_fiber_hits,
+            y_fiber_hits,
+            z_fiber_hits
+        ],
+        ["z", "x", "x"],
+        ["y", "z", "y"],
+        [[1,1], [0,0], [1,0]]
+        ):
+
+            data = np.array(
+                [[getattr(hit, u_name), getattr(hit, v_name), 0.0] for hit in fiber_hits if hit.weight > self.min_charge_thresh]
+            )
+
+            if data.shape[0] == 0:
+                # maybe there are no hits above threshold
+                
+                plt.tight_layout()
+
+                self._pdf.savefig(fig)
+                fig.clf()
+
+                return
+
+            cluster_ids = self.clusterer.fit_predict(data)
+
+            for cluster_id in np.unique(cluster_ids):
+                if cluster_id == -1:
+                    # -1 is id for "noise"
+                    continue
+
+                linePoints = self.hough_finder(data[cluster_ids == cluster_id, :])
+            
+                for i in range(linePoints.shape[0]):
+                    axs[ax_ids[0], ax_ids[1]].plot(linePoints[i, :, 0], linePoints[i, :, 1])
+
+        plt.tight_layout()
+
+        self._pdf.savefig(fig)
+
+        plt.close(fig)
+    
+    def _finalise(self):
+        self._pdf.close()
+
+class HoughTransform3D(ModuleBase):
+    """ Performs simple Hough line transform on 3D hits
+
+    Right now only makes plots of the fitted lines, doesn't save them to the event
     """
 
     def __init__(self):
@@ -61,8 +171,8 @@ class HoughTransform(ModuleBase):
             neighbour_dist=20.0, min_points_per_line=5, lattice_step_size=10.0
         )
 
-        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples.pdf")
-        self._corner_pdf = matplotlib.backends.backend_pdf.PdfPages("Hough-event-examples-corner.pdf")
+        self._pdf = matplotlib.backends.backend_pdf.PdfPages("Hough3D-event-examples.pdf")
+        self._corner_pdf = matplotlib.backends.backend_pdf.PdfPages("Hough3D-event-examples-corner.pdf")
 
         self.clusterer = DBSCAN(40.0)
 
