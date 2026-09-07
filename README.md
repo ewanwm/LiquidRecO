@@ -13,13 +13,8 @@ pip install ./LiquidRecO/
 
 ## Usage 
 
-After installing, you can use the main liquidreco app to run the reconstruction:
-
-```
-liquidreco -i <file containing hits>
-```
-
-This app has many options and is highly configurable. To see the varius options you can do 
+After installing, you can use the main `liquidreco` app to run the reconstruction. 
+This app has many options and is highly configurable. To see the various options you can do 
 
 ```
 liquidreco -h
