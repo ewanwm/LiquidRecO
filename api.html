@@ -109,7 +109,8 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#reconstruction">Reconstruction</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.HoughTransform"><code class="docutils literal notranslate"><span class="pre">HoughTransform</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.HoughTransform2D"><code class="docutils literal notranslate"><span class="pre">HoughTransform2D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.HoughTransform3D"><code class="docutils literal notranslate"><span class="pre">HoughTransform3D</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.LocalMeanDBSCAN"><code class="docutils literal notranslate"><span class="pre">LocalMeanDBSCAN</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#liquidreco.modules.reconstruction.MinimumSpanningTree2D"><code class="docutils literal notranslate"><span class="pre">MinimumSpanningTree2D</span></code></a></li>
 </ul>
@@ -1221,26 +1222,27 @@ commands defined by argparse which will then be available inside of your module 
 <blockquote>
 <div><p id="module-liquidreco.modules.reconstruction">Module to be used to reconstruct tracks from hits.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform</span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform" title="Link to this definition"></a></dt>
-<dd><p>Performs simple Hough line transform</p>
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform2D</span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform2D" title="Link to this definition"></a></dt>
+<dd><p>Performs simple Hough line transform on 2D hits</p>
+<p>Right now only makes plots of the fitted lines, doesn’t save them to the event</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._finalise">
-<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._finalise" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform2D._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform2D._finalise" title="Link to this definition"></a></dt>
 <dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._initialise">
-<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._initialise" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform2D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform2D._initialise" title="Link to this definition"></a></dt>
 <dd><p>Set up anything here that needs to be initialised</p>
 <p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
 line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._process">
-<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._process" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform2D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform2D._process" title="Link to this definition"></a></dt>
 <dd><p>Perform Hough transform on an event and save the result to a given file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1250,8 +1252,53 @@ line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform._setup_cli_options">
-<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform._setup_cli_options" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform2D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform2D._setup_cli_options" title="Link to this definition"></a></dt>
+<dd><p>Override this to set up any command line options for this module</p>
+<p>The parser passed to this will be a subparser associated with this module. you can call any number of 
+commands defined by argparse which will then be available inside of your module via self.args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<em>ArgumentParser</em>) – The subparser for this module</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform3D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">liquidreco.modules.reconstruction.</span></span><span class="sig-name descname"><span class="pre">HoughTransform3D</span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform3D" title="Link to this definition"></a></dt>
+<dd><p>Performs simple Hough line transform on 3D hits</p>
+<p>Right now only makes plots of the fitted lines, doesn’t save them to the event</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform3D._finalise">
+<span class="sig-name descname"><span class="pre">_finalise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform3D._finalise" title="Link to this definition"></a></dt>
+<dd><p>Add anything here that is neaded to tear down the object e.g. closing any files, freeing resources etc.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform3D._initialise">
+<span class="sig-name descname"><span class="pre">_initialise</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform3D._initialise" title="Link to this definition"></a></dt>
+<dd><p>Set up anything here that needs to be initialised</p>
+<p>This gets called <em>AFTER</em> argument parsing is done so anything that depends on command 
+line inputs needs to go in here and <em>NOT</em> in the __init__() method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform3D._process">
+<span class="sig-name descname"><span class="pre">_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform3D._process" title="Link to this definition"></a></dt>
+<dd><p>Perform Hough transform on an event and save the result to a given file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<a class="reference internal" href="#liquidreco.event.Event" title="liquidreco.event.Event"><em>Event</em></a>) – Object describing the hits in an event</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="liquidreco.modules.reconstruction.HoughTransform3D._setup_cli_options">
+<span class="sig-name descname"><span class="pre">_setup_cli_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#liquidreco.modules.reconstruction.HoughTransform3D._setup_cli_options" title="Link to this definition"></a></dt>
 <dd><p>Override this to set up any command line options for this module</p>
 <p>The parser passed to this will be a subparser associated with this module. you can call any number of 
 commands defined by argparse which will then be available inside of your module via self.args.</p>
